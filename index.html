@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="./assets/maili-icon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maili - AI-Powered Email Management</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #000;
+            background-color: #fff;
+        }
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            padding: 1rem 0;
+            transition: background 0.3s ease;
+        }
+        header.scrolled {
+            background: rgba(255, 255, 255, 0.95);
+            border-bottom: 1px solid #eee;
+        }
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+        .logo img {
+            height: 80px;
+            width: 70px;
+            margin-right: 0rem;
+        }
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        .nav-links a {
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+        }
+        .nav-links a:hover {
+            opacity: 0.7;
+            background: rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
+        .cta-button {
+            background: #000;
+            color: #fff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .cta-button:hover {
+            background: #333;
+            transform: translateY(-2px);
+        }
+        /* Hero Section */
+        #hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 2rem;
+            background: #fff;
+        }
+        .hero-logo {
+            height: 140px;
+            margin-bottom: 2rem;
+        }
+        .hero {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+        .hero p {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            max-width: 600px;
+            opacity: 0.8;
+            text-align: center;
+        }
+        .hero-cta {
+            display: inline-block;
+            background: #000;
+            color: #fff;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .hero-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        /* Features Section */
+        #features {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 4rem;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 3rem;
+            align-items: start;
+        }
+        .feature-card {
+            text-align: center;
+            padding: 2rem;
+            border: 1px solid #eee;
+            border-radius: 20px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 500px;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .feature-card p {
+            opacity: 0.7;
+            line-height: 1.5;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        /* Container for feature images */
+        .feature-image-container {
+            width: 100%;
+            height: 220px;
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f9f9f9;
+            margin: 1rem auto 0;
+        }
+        .feature-image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            display: block;
+        }
+        /* Screenshots Section */
+        #screenshots {
+            padding: 6rem 2rem;
+            background: #f9f9f9;
+        }
+        #screenshots .section-title {
+            margin-bottom: 3rem;
+        }
+        .screenshot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .screenshot-item {
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        .screenshot-item img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        /* Pricing Section */
+        #pricing {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #fff;
+        }
+        #pricing .section-title {
+            margin-bottom: 3rem;
+        }
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 3rem;
+            align-items: start;
+        }
+        .pricing-card {
+            text-align: center;
+            padding: 3rem 2rem;
+            border: 1px solid #eee;
+            border-radius: 20px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 400px;
+        }
+        .pricing-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+        .pricing-card.popular {
+            border-color: #000;
+            background: rgba(0, 0, 0, 0.02);
+        }
+        .pricing-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .pricing-card .price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #000;
+        }
+        .pricing-card ul {
+            list-style: none;
+            margin-bottom: 2rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .pricing-card ul li {
+            opacity: 0.7;
+            text-align: left;
+        }
+        .pricing-card ul li:before {
+            content: "✓ ";
+            color: #000;
+            font-weight: bold;
+        }
+        .pricing-card .plan-cta {
+            background: #000;
+            color: #fff;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-weight: 500;
+            transition: background 0.3s;
+            margin-top: auto;
+        }
+        .pricing-card .plan-cta:hover {
+            background: #333;
+        }
+        /* CTA Section */
+        #cta {
+            padding: 6rem 2rem;
+            text-align: center;
+            background: #fff;
+        }
+        #cta h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        #cta p {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            opacity: 0.8;
+        }
+        /* Footer */
+        footer {
+            padding: 3rem 2rem;
+            background: #000;
+            color: #fff;
+            text-align: center;
+        }
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
+            list-style: none;
+        }
+        .footer-links a {
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+        .footer-links a:hover {
+            opacity: 1;
+        }
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none; /* Hide nav on mobile, or make hamburger */
+            }
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            .features-grid, .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+            .feature-card {
+                min-height: auto;
+            }
+            .feature-image-container {
+                height: 200px;
+            }
+        }
+        /* Smooth scroll */
+        html {
+            scroll-behavior: smooth;
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <nav>
+            <div class="logo">
+                <!-- Replace with your logo URL -->
+                <img src="./assets/maili-icon.svg" class="logo-img" alt="Maili Logo" />
+            </div>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#screenshots">Screenshots</a></li>
+                <li><a href="#pricing">Pricing</a></li>
+            </ul>
+            <a href="https://app.maili.in" class="cta-button">Get Started</a>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="hero">
+        <img src="./assets/maili-gpt-rm.png" alt="Maili Hero Logo" class="hero-logo" />
+        <div class="hero">
+            <h1>Revolutionize Your Email Experience</h1>
+            <p>Connect multiple accounts, get AI-powered summaries, generate replies, filter spam, and schedule emails effortlessly. All in a sleek, intuitive interface.</p>
+            <a href="https://app.maili.in/signup" class="hero-cta">Start Free Trial</a>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features">
+        <h2 class="section-title">Powerful Features</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <h3>Multi-Account Integration</h3>
+                <p>Seamlessly connect your Gmail, Outlook, and other accounts in one unified inbox. Manage everything from a single dashboard.</p>
+                <div class="feature-image-container">
+                    <img src="./assets/f1.jpg" alt="Multi-Account Integration" />
+                </div>
+            </div>
+            <div class="feature-card">
+                <h3>AI Email Summarization</h3>
+                <p>Get concise summaries of long threads and newsletters, saving you hours of reading time.</p>
+                <div class="feature-image-container">
+                    <img src="./assets/f2.jpg" alt="AI Email Summarization" />
+                </div>
+            </div>
+            <div class="feature-card">
+                <h3>Text-to-Voice Reading</h3>
+                <p>Listen to your emails on the go with natural-sounding voice synthesis.</p>
+                <div class="feature-image-container">
+                    <img src="./assets/f2.jpg" alt="Text-to-Voice Reading" />
+                </div>
+            </div>
+            <div class="feature-card">
+                <h3>AI Reply Generation</h3>
+                <p>Craft professional responses in seconds with context-aware AI suggestions.</p>
+                <div class="feature-image-container">
+                    <img src="./assets/f3.jpg" alt="AI Reply Generation" />
+                </div>
+            </div>
+            <div class="feature-card">
+                <h3>Advanced Spam Filtering</h3>
+                <p>Intelligent filters keep your inbox clean, learning from your preferences over time.</p>
+                <div class="feature-image-container">
+                    <img src="./assets/f4.jpg" alt="Advanced Spam Filtering" />
+                </div>
+            </div>
+            <div class="feature-card">
+                <h3>Email Scheduling</h3>
+                <p>Compose now, send later. Schedule emails at optimal times for maximum impact.</p>
+                <div class="feature-image-container">
+                    <img src="./assets/f5.jpg" alt="Email Scheduling" />
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Screenshots Section -->
+    <section id="screenshots">
+        <h2 class="section-title">See It In Action</h2>
+        <div class="screenshot-grid">
+            <!-- Replace with your app screenshot URL or base64 -->
+            <div class="screenshot-item">
+                <img src="data:image/png;base64,[BASE64_ENCODED_APP_SCREENSHOT_HERE]" alt="Maili Inbox Screenshot" />
+            </div>
+            <div class="screenshot-item">
+                <img src="data:image/png;base64,[ADDITIONAL_SCREENSHOT_BASE64]" alt="Additional Screenshot" />
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing">
+        <h2 class="section-title">Choose Your Plan</h2>
+        <div class="pricing-grid">
+            <div class="pricing-card">
+                <h3>Freemium</h3>
+                <div class="price">$0<span>/mo</span></div>
+                <ul>
+                    <li>Multi-Account Integration</li>
+                    <li>Basic Spam Filtering</li>
+                    <li>Email Scheduling</li>
+                    <li>Unlimited Storage</li>
+                    <li>Community Support</li>
+                </ul>
+                <a href="https://app.maili.in/signup" class="plan-cta">Get Started Free</a>
+            </div>
+            <div class="pricing-card popular">
+                <h3>Premium</h3>
+                <div class="price">$12<span>/mo</span></div>
+                <ul>
+                    <li>All Freemium Features</li>
+                    <li>AI Email Summarization</li>
+                    <li>Text-to-Voice Reading</li>
+                    <li>AI Reply Generation</li>
+                    <li>Advanced AI Spam Filtering</li>
+                    <li>Priority Support</li>
+                </ul>
+                <a href="https://app.maili.in/signup?plan=premium" class="plan-cta">Start Premium</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section id="cta">
+        <h2>Ready to Transform Your Email?</h2>
+        <p>Try Maili today and experience the future of email.</p>
+        <a href="https://app.maili.in/signup" class="hero-cta">Get Started Free</a>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <ul class="footer-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#screenshots">Screenshots</a></li>
+                <li><a href="#pricing">Pricing</a></li>
+                <li><a href="/privacy">Privacy</a></li>
+                <li><a href="/terms">Terms</a></li>
+                <li><a href="/contact">Contact</a></li>
+            </ul>
+            <p>&copy; 2025 Maili. Built with ❤️ for better email.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Simple smooth scroll for nav links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Header scroll effect for transparency
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            if (window.scrollY > 100) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+    </script>
+</body>
+</html>
