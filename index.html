@@ -5,6 +5,8 @@
     <link rel="icon" type="image/svg+xml" href="./assets/maili-icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Maili - AI-Powered Email Management</title>
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
         /* Reset and base styles */
         * {
@@ -359,6 +361,24 @@
         html {
             scroll-behavior: smooth;
         }
+        /* Request Access Form */
+        #request-access {
+            padding: 6rem 2rem;
+            background: #f9f9f9;
+        }
+        #access-request-form input:focus {
+            outline: none;
+            border-color: #000;
+        }
+        #form-message {
+            font-weight: 500;
+        }
+        #form-message.success {
+            color: #28a745;
+        }
+        #form-message.error {
+            color: #dc3545;
+        }
 
     </style>
 </head>
@@ -372,9 +392,10 @@
             </div>
             <ul class="nav-links">
                 <li><a href="#features">Features</a></li>
-              <li><a href="#pricing">Pricing</a></li>
+                <li><a href="#pricing">Pricing</a></li>
+                <li><a href="#request-access">Request Access</a></li>
             </ul>
-            <a href="https://app.maili.in" class="cta-button">Get Started</a>
+            <a href="#request-access" class="cta-button">Request Access</a>
         </nav>
     </header>
 
@@ -384,7 +405,7 @@
         <div class="hero">
             <h1>Revolutionize Your Email Experience</h1>
             <p>Connect multiple accounts, get AI-powered summaries, generate replies, filter spam, and schedule emails effortlessly. All in a sleek, intuitive interface.</p>
-            <a href="https://app.maili.in/signup" class="hero-cta">Start Free Trial</a>
+            <a href="#request-access" class="hero-cta">Request Access</a>
         </div>
     </section>
 
@@ -465,7 +486,7 @@
                     <li>Unlimited Storage</li>
                     <li>Community Support</li>
                 </ul>
-                <a href="https://app.maili.in/signup" class="plan-cta">Get Started Free</a>
+                <a href="#request-access" class="plan-cta">Request Access</a>
             </div>
             <div class="pricing-card popular">
                 <h3>Premium</h3>
@@ -478,16 +499,43 @@
                     <li>Advanced AI Spam Filtering</li>
                     <li>Priority Support</li>
                 </ul>
-                <a href="https://app.maili.in/signup?plan=premium" class="plan-cta">Start Premium</a>
+                <a href="#request-access" class="plan-cta">Request Access</a>
             </div>
         </div>
     </section>
 
-    <!-- CTA Section -->
-    <section id="cta">
-        <h2>Ready to Transform Your Email?</h2>
-        <p>Try Maili today and experience the future of email.</p>
-        <a href="https://app.maili.in/signup" class="hero-cta">Get Started Free</a>
+    <!-- Request Access Section -->
+    <section id="request-access">
+        <div style="max-width: 600px; margin: 0 auto; padding: 6rem 2rem;">
+            <h2 class="section-title">Request Access</h2>
+            <p style="text-align: center; margin-bottom: 2rem; opacity: 0.8;">
+                Maili is currently in private beta. Enter your Gmail address below and we'll send you access instructions.
+            </p>
+            <form id="access-request-form" style="display: flex; flex-direction: column; gap: 1rem;">
+                <input 
+                    type="email" 
+                    id="gmail-address" 
+                    placeholder="your.email@gmail.com" 
+                    required
+                    pattern="[a-zA-Z0-9._%+-]+@gmail\.com"
+                    style="padding: 1rem; border: 1px solid #ddd; border-radius: 50px; font-size: 1rem; text-align: center;"
+                />
+                <input 
+                    type="text" 
+                    id="user-name" 
+                    placeholder="Your Name (Optional)" 
+                    style="padding: 1rem; border: 1px solid #ddd; border-radius: 50px; font-size: 1rem; text-align: center;"
+                />
+                <button 
+                    type="submit" 
+                    class="hero-cta"
+                    style="margin-top: 1rem; cursor: pointer; border: none;"
+                >
+                    Request Access
+                </button>
+                <div id="form-message" style="text-align: center; margin-top: 1rem; min-height: 2rem;"></div>
+            </form>
+        </div>
     </section>
 
     <!-- Footer -->
@@ -509,9 +557,12 @@
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
             });
         });
 
@@ -524,6 +575,86 @@
                 header.classList.remove('scrolled');
             }
         });
+
+        // Initialize EmailJS
+        emailjs.init("6fSQuZOWa-zHBkx68");
+
+        // Access Request Form Handler
+        document.getElementById('access-request-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const gmailAddress = document.getElementById('gmail-address').value.trim();
+            const userName = document.getElementById('user-name').value.trim();
+            const messageDiv = document.getElementById('form-message');
+            const submitButton = this.querySelector('button[type="submit"]');
+            
+            // Validate Gmail address
+            if (!gmailAddress.endsWith('@gmail.com') && !gmailAddress.endsWith('@googlemail.com')) {
+                messageDiv.textContent = 'Please enter a valid Gmail address (@gmail.com or @googlemail.com)';
+                messageDiv.className = 'error';
+                return;
+            }
+            
+            // Disable button and show loading
+            submitButton.disabled = true;
+            submitButton.textContent = 'Sending...';
+            messageDiv.textContent = '';
+            messageDiv.className = '';
+            
+            try {
+                // Get client IP address
+                let clientIP = 'Unable to fetch';
+                try {
+                    const ipResponse = await fetch('https://api.ipify.org?format=json');
+                    const ipData = await ipResponse.json();
+                    clientIP = ipData.ip;
+                } catch (ipError) {
+                    console.log('Could not fetch IP address');
+                }
+                
+                // Prepare template parameters for EmailJS
+                // Variable names must match your EmailJS template variables ({{email}}, {{name}}, etc.)
+                const templateParams = {
+                    email: gmailAddress,              // Maps to {{email}} in template
+                    name: userName || 'Not provided', // Maps to {{name}} in template
+                    time: new Date().toLocaleString(), // Maps to {{time}} in template (if used)
+                    timestamp: new Date().toISOString(), // Maps to {{timestamp}} in template (if used)
+                    // Additional info for your reference (add these to template if needed)
+                    request_date: new Date().toLocaleString(),
+                    ip_address: clientIP,
+                    user_agent: navigator.userAgent
+                };
+                
+                // Send email using EmailJS
+                const response = await emailjs.send(
+                    'service_wrf8xim',
+                    'template_vkyy4u1',
+                    templateParams
+                );
+                
+                // EmailJS returns { status: 200, text: 'OK' } on success
+                if (response && response.status === 200) {
+                    // Show success message
+                    messageDiv.textContent = 'Request submitted successfully! We\'ll review your request and send you access instructions via email soon.';
+                    messageDiv.className = 'success';
+                    
+                    // Reset form
+                    this.reset();
+                } else {
+                    throw new Error('EmailJS returned unexpected response: ' + JSON.stringify(response));
+                }
+                
+            } catch (error) {
+                console.error('Error submitting request:', error);
+                messageDiv.textContent = 'Error submitting request. Please try again or contact us directly.';
+                messageDiv.className = 'error';
+            } finally {
+                // Re-enable button
+                submitButton.disabled = false;
+                submitButton.textContent = 'Request Access';
+            }
+        });
+        
     </script>
 </body>
 </html>
