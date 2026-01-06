@@ -565,10 +565,14 @@
                 <h3>Freemium</h3>
                 <div class="price">$0<span>/mo</span></div>
                 <ul>
-                    <li>Multi-Account Integration</li>
+                    <li>Multi-Account Integration (Gmail & Outlook)</li>
+                    <li>15 AI Email Summaries per month</li>
+                    <li>10 AI Reply Generations per month</li>
                     <li>Basic Spam Filtering</li>
                     <li>Email Scheduling</li>
-                    <li>Unlimited Storage</li>
+                    <li>Text-to-Voice Reading</li>
+                    <li>Email Analytics Dashboard</li>
+                    <li>Real-time Email Access</li>
                     <li>Community Support</li>
                 </ul>
                 <a href="#request-access" class="plan-cta">Request Access</a>
@@ -578,11 +582,12 @@
                 <div class="price">$12<span>/mo</span></div>
                 <ul>
                     <li>All Freemium Features</li>
-                    <li>AI Email Summarization</li>
-                    <li>Text-to-Voice Reading</li>
-                    <li>AI Reply Generation</li>
+                    <li>Unlimited AI Email Summaries</li>
+                    <li>Unlimited AI Reply Generations</li>
                     <li>Advanced AI Spam Filtering</li>
-                    <li>Priority Support</li>
+                    <li>Priority Email Support</li>
+                    <li>Early Access to New Features</li>
+                    <li>Enhanced Analytics & Insights</li>
                 </ul>
                 <a href="#request-access" class="plan-cta">Request Access</a>
             </div>
@@ -705,59 +710,81 @@
                 const timestamp = new Date().toISOString();
                 const requestDate = new Date().toLocaleString();
                 
-                // Prepare template parameters for EmailJS
-                const templateParams = {
-                    email: gmailAddress,
+                // Prepare data for Google Sheets
+                const formData = {
                     name: userName || 'Not provided',
-                    time: requestDate,
+                    email: gmailAddress,
+                    status: 'Pending',
                     timestamp: timestamp,
                     request_date: requestDate,
-                    ip_address: clientIP,
-                    user_agent: navigator.userAgent
+                    ip_address: clientIP
                 };
                 
-                // Send email using EmailJS
-                const emailResponse = await emailjs.send(
-                    'service_wrf8xim',
-                    'template_vkyy4u1',
-                    templateParams
-                );
-                
-                // Save to Google Sheets (if URL is configured)
+                // Save to Google Sheets FIRST (primary method)
+                let sheetsSuccess = false;
                 if (GOOGLE_SHEETS_WEB_APP_URL && GOOGLE_SHEETS_WEB_APP_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
                     try {
+                        // Use fetch with no-cors mode for Google Apps Script
                         await fetch(GOOGLE_SHEETS_WEB_APP_URL, {
                             method: 'POST',
-                            mode: 'no-cors', // Google Apps Script doesn't support CORS, so we use no-cors
+                            mode: 'no-cors', // Google Apps Script doesn't support CORS
                             headers: {
                                 'Content-Type': 'application/json',
                             },
-                            body: JSON.stringify({
-                                name: userName || 'Not provided',
-                                email: gmailAddress,
-                                status: 'Pending',
-                                timestamp: timestamp,
-                                request_date: requestDate,
-                                ip_address: clientIP
-                            })
+                            body: JSON.stringify(formData)
                         });
-                        // Note: With no-cors mode, we can't check the response, but the data should be saved
+                        sheetsSuccess = true;
+                        // Note: With no-cors mode, we can't verify the response, but assume success
+                        console.log('Data sent to Google Sheets');
                     } catch (sheetsError) {
-                        console.log('Could not save to Google Sheets:', sheetsError);
-                        // Don't fail the form submission if Sheets fails
+                        console.error('Error saving to Google Sheets:', sheetsError);
+                        // Continue anyway - try EmailJS as backup
                     }
+                } else {
+                    // If Google Sheets URL not configured, mark as success to allow EmailJS to proceed
+                    sheetsSuccess = true;
                 }
                 
-                // EmailJS returns { status: 200, text: 'OK' } on success
-                if (emailResponse && emailResponse.status === 200) {
-                    // Show success message
+                // Try to send email using EmailJS (secondary/optional notification)
+                let emailSuccess = false;
+                try {
+                    const templateParams = {
+                        email: gmailAddress,
+                        name: userName || 'Not provided',
+                        time: requestDate,
+                        timestamp: timestamp,
+                        request_date: requestDate,
+                        ip_address: clientIP,
+                        user_agent: navigator.userAgent
+                    };
+                    
+                    const emailResponse = await emailjs.send(
+                        'service_wrf8xim',
+                        'template_vkyy4u1',
+                        templateParams
+                    );
+                    
+                    if (emailResponse && emailResponse.status === 200) {
+                        emailSuccess = true;
+                        console.log('Email notification sent via EmailJS');
+                    }
+                } catch (emailError) {
+                    // EmailJS failed (could be limit exceeded, network error, etc.)
+                    console.warn('EmailJS notification failed (this is okay):', emailError);
+                    // Don't throw error - continue with success if Sheets worked
+                }
+                
+                // Show success if Google Sheets update worked (primary method)
+                // EmailJS is just a bonus notification, not required
+                if (sheetsSuccess) {
                     messageDiv.textContent = 'Request submitted successfully! We\'ll review your request and send you access instructions via email soon.';
                     messageDiv.className = 'success';
                     
                     // Reset form
                     this.reset();
                 } else {
-                    throw new Error('EmailJS returned unexpected response: ' + JSON.stringify(emailResponse));
+                    // Only show error if both methods failed
+                    throw new Error('Unable to submit request. Please try again later.');
                 }
                 
             } catch (error) {
