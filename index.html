@@ -4,42 +4,75 @@
     <meta charset="UTF-8">
     <link rel="icon" type="image/svg+xml" href="./assets/maili-icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maili - AI-Powered Email Management</title>
-    <!-- EmailJS SDK -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <title>Maili - AI-Powered Email Intelligence</title>
     <style>
-        /* Reset and base styles */
+        /* Modern CSS Reset & Variables */
+        :root {
+            --bg-color: #050505;
+            --surface-color: rgba(255, 255, 255, 0.02);
+            --surface-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1aa;
+            --btn-bg: #ffffff;
+            --btn-text: #000000;
+            --btn-hover: #f1f1f1;
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: var(--font-family);
             line-height: 1.6;
-            color: #000;
-            background-color: #fff;
+            color: var(--text-primary);
+            background-color: var(--bg-color);
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
         }
+
         a {
             text-decoration: none;
             color: inherit;
         }
-        /* Header */
+
+        /* Abstract Glow Effects */
+        .glow-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: -1;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+        .orb-1 {
+            top: -10%; left: 50%; transform: translateX(-50%);
+            width: 800px; height: 500px;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0) 70%);
+        }
+
+        /* Header / Nav */
         header {
             position: fixed;
             top: 0;
             width: 100%;
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            background: rgba(5, 5, 5, 0.5);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid transparent;
             z-index: 1000;
-            padding: 1rem 0;
-            transition: background 0.3s ease;
+            padding: 1.25rem 0;
+            transition: all 0.3s ease;
         }
         header.scrolled {
-            background: rgba(255, 255, 255, 0.95);
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--surface-border);
+            background: rgba(5, 5, 5, 0.85);
+            padding: 1rem 0;
         }
+
         nav {
             display: flex;
             justify-content: space-between;
@@ -48,756 +81,489 @@
             margin: 0 auto;
             padding: 0 2rem;
         }
+
         .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
             display: flex;
             align-items: center;
+            gap: 12px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
         }
         .logo img {
-            height: 70px;
-            width: 70px;
-            margin-right: 0rem;
+            height: 32px;
+            width: auto;
+            border-radius: 6px;
         }
+
         .nav-links {
             display: flex;
             list-style: none;
-            gap: 2rem;
+            gap: 2.5rem;
         }
         .nav-links a {
+            font-size: 0.9rem;
             font-weight: 500;
-            transition: all 0.3s ease;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
+            color: var(--text-secondary);
+            transition: color 0.2s ease;
         }
         .nav-links a:hover {
-            opacity: 0.7;
-            background: rgba(0, 0, 0, 0.05);
-            transform: translateY(-2px);
+            color: var(--text-primary);
         }
-        .cta-button {
-            background: #000;
-            color: #fff;
+
+        /* Pure White Buttons */
+        .btn-primary {
+            background: var(--btn-bg);
+            color: var(--btn-text);
             padding: 0.75rem 1.5rem;
-            border-radius: 50px;
-            font-weight: 500;
-            transition: all 0.3s ease;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
         }
-        .cta-button:hover {
-            background: #333;
+        .btn-primary:hover {
+            background: var(--btn-hover);
             transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.3);
         }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--surface-border);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .btn-outline:hover {
+            background: var(--surface-color);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
         /* Hero Section */
         #hero {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 0 2rem;
-            background: #fff;
-        }
-        .hero-logo {
-            height: 140px;
-            margin-bottom: 2rem;
-        }
-        .hero {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-        }
-        .hero h1 {
-            font-size: 3.5rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            line-height: 1.2;
-        }
-        .hero p {
-            font-size: 1.25rem;
-            margin-bottom: 2rem;
-            max-width: 600px;
-            opacity: 0.8;
-            text-align: center;
-        }
-        .hero-cta {
-            display: inline-block;
-            background: #000;
-            color: #fff;
-            padding: 1rem 2rem;
-            border-radius: 50px;
-            font-size: 1.1rem;
-            font-weight: 500;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-        .hero-cta:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-        }
-        /* Features Section */
-        #features {
-            padding: 6rem 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .section-title {
-            text-align: center;
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 4rem;
-        }
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 3rem;
-            align-items: start;
-        }
-        .feature-card {
-            text-align: center;
-            padding: 2rem;
-            border: 1px solid #eee;
-            border-radius: 20px;
-            transition: transform 0.3s, box-shadow 0.3s;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            min-height: 500px;
-        }
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
-        }
-        .feature-card h3 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-        }
-        .feature-card p {
-            opacity: 0.7;
-            line-height: 1.5;
-            flex-grow: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        /* Container for feature images */
-        .feature-image-container {
-            width: 100%;
-            height: 220px;
-            border-radius: 10px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f9f9f9;
-            margin: 1rem auto 0;
-        }
-        .feature-image-container img {
-            max-width: 100%;
-            max-height: 100%;
-            width: auto;
-            height: auto;
-            object-fit: contain;
-            display: block;
-        }
-        /* Screenshots Section */
-        #screenshots {
-            padding: 6rem 2rem;
-            background: #f9f9f9;
-        }
-        #screenshots .section-title {
-            margin-bottom: 3rem;
-        }
-        .screenshot-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .screenshot-item {
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
-        .screenshot-item img {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-        /* Upcoming Features Section */
-        #upcoming-features {
-            padding: 6rem 2rem;
-            background: #f9f9f9;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        #upcoming-features .section-title {
-            margin-bottom: 3rem;
-        }
-        .upcoming-features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 3rem;
-            align-items: start;
-        }
-        .upcoming-feature-card {
-            text-align: center;
-            padding: 2rem;
-            border: 1px solid #eee;
-            border-radius: 20px;
-            background: #fff;
-            transition: transform 0.3s, box-shadow 0.3s;
             position: relative;
-            overflow: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 120px 2rem 4rem;
         }
-        .upcoming-feature-card::before {
-            content: "Coming Soon";
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: #000;
-            color: #fff;
-            padding: 0.25rem 0.75rem;
+
+        .hero h1 {
+            font-size: clamp(3rem, 6vw, 5.5rem);
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            max-width: 900px;
+            background: linear-gradient(180deg, #FFFFFF 0%, #a1a1aa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: clamp(1.1rem, 2vw, 1.35rem);
+            color: var(--text-secondary);
+            margin-bottom: 4rem;
+            max-width: 700px;
+            line-height: 1.8;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
+        
+        /* Glassmorphism Screenshot effect (OpenClaw style) */
+        .glass-preview {
+            width: 100%;
             border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
+            padding: 12px;
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8), 
+                        inset 0 1px 1px rgba(255, 255, 255, 0.15),
+                        0 0 40px rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            position: relative;
         }
-        .upcoming-feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        .glass-preview img {
+            width: 100%;
+            border-radius: 12px;
+            display: block;
+            border: 1px solid rgba(0,0,0,0.5);
         }
-        .upcoming-feature-card h3 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            margin-top: 2rem;
+        /* Top shiny edge */
+        .glass-preview::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            z-index: 10;
         }
-        .upcoming-feature-card p {
-            opacity: 0.7;
-            line-height: 1.5;
+
+        .hero-preview {
+            margin-top: 5rem;
+            max-width: 1100px;
+            transform: perspective(1200px) rotateX(4deg);
+            z-index: 10;
         }
-        .upcoming-feature-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            opacity: 0.8;
-        }
-        /* Pricing Section */
-        #pricing {
-            padding: 6rem 2rem;
+
+        /* Sections Grid */
+        section {
+            padding: 8rem 2rem;
+            position: relative;
             max-width: 1200px;
             margin: 0 auto;
-            background: #fff;
         }
-        #pricing .section-title {
-            margin-bottom: 3rem;
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 5rem;
         }
+        .section-header h2 {
+            font-size: 3rem;
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            margin-bottom: 1rem;
+            background: linear-gradient(180deg, #FFFFFF 0%, #a1a1aa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .section-header p {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Feature Rows */
+        .feature-row {
+            display: flex;
+            align-items: center;
+            gap: 4rem;
+            margin-bottom: 8rem;
+        }
+        .feature-row:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+        .feature-content {
+            flex: 1;
+        }
+        .feature-content h3 {
+            font-size: 2rem;
+            font-weight: 600;
+            letter-spacing: -0.03em;
+            margin-bottom: 1rem;
+        }
+        .feature-content p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 2rem;
+        }
+        .feature-image-wrapper {
+            flex: 1;
+        }
+
+        /* Pricing */
         .pricing-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 3rem;
-            align-items: start;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            max-width: 900px;
+            margin: 0 auto;
         }
         .pricing-card {
-            text-align: center;
-            padding: 3rem 2rem;
-            border: 1px solid #eee;
+            background: var(--surface-color);
+            border: 1px solid var(--surface-border);
             border-radius: 20px;
-            transition: transform 0.3s, box-shadow 0.3s;
+            padding: 3rem;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            min-height: 400px;
-        }
-        .pricing-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            backdrop-filter: blur(10px);
         }
         .pricing-card.popular {
-            border-color: #000;
-            background: rgba(0, 0, 0, 0.02);
+            border-color: rgba(255, 255, 255, 0.2);
+            background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 100%);
+            box-shadow: 0 0 30px rgba(255,255,255,0.03);
         }
-        .pricing-card h3 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-        }
-        .pricing-card .price {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            color: #000;
-        }
-        .pricing-card ul {
-            list-style: none;
+        .pricing-header {
             margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--surface-border);
+        }
+        .pricing-header h3 {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+        .price-val {
+            font-size: 3.5rem;
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            line-height: 1;
+        }
+        .price-val span {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            letter-spacing: 0;
+        }
+        .pricing-features {
+            list-style: none;
             flex-grow: 1;
+            margin-bottom: 3rem;
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 1rem;
         }
-        .pricing-card ul li {
-            opacity: 0.7;
-            text-align: left;
+        .pricing-features li {
+            font-size: 0.95rem;
+            color: #d4d4d8;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
         }
-        .pricing-card ul li:before {
-            content: "✓ ";
-            color: #000;
-            font-weight: bold;
+        .pricing-features li::before {
+            content: '\2713';
+            color: var(--text-primary);
         }
-        .pricing-card .plan-cta {
-            background: #000;
-            color: #fff;
-            padding: 1rem 2rem;
-            border-radius: 50px;
-            font-weight: 500;
-            transition: background 0.3s;
-            margin-top: auto;
+        
+        .pricing-card .btn-primary {
+            width: 100%;
+            padding: 1rem;
         }
-        .pricing-card .plan-cta:hover {
-            background: #333;
-        }
-        /* CTA Section */
-        #cta {
+
+        /* Connect / Feedback Block */
+        .connect-section {
             padding: 6rem 2rem;
             text-align: center;
-            background: #fff;
+            background: radial-gradient(circle at center, rgba(255,255,255,0.03) 0%, transparent 70%);
+            border-top: 1px solid var(--surface-border);
         }
-        #cta h2 {
-            font-size: 2.5rem;
+        .connect-section h3 {
+            font-size: 2rem;
+            letter-spacing: -0.03em;
             margin-bottom: 1rem;
+            font-weight: 600;
         }
-        #cta p {
-            font-size: 1.25rem;
-            margin-bottom: 2rem;
-            opacity: 0.8;
+        .connect-section p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 2.5rem;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
         }
+        
         /* Footer */
         footer {
-            padding: 3rem 2rem;
-            background: #000;
-            color: #fff;
+            border-top: 1px solid var(--surface-border);
+            padding: 4rem 2rem;
             text-align: center;
-        }
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
         }
         .footer-links {
             display: flex;
             justify-content: center;
             gap: 2rem;
-            margin-bottom: 1rem;
             list-style: none;
+            margin-bottom: 2rem;
         }
         .footer-links a {
-            opacity: 0.8;
-            transition: opacity 0.3s;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            transition: color 0.2s;
         }
         .footer-links a:hover {
-            opacity: 1;
+            color: var(--text-primary);
         }
-        /* Responsive */
-        @media (max-width: 768px) {
-            .nav-links {
-                display: none; /* Hide nav on mobile, or make hamburger */
-            }
-            .hero h1 {
-                font-size: 2.5rem;
-            }
-            .features-grid, .pricing-grid {
-                grid-template-columns: 1fr;
-            }
-            .feature-card {
-                min-height: auto;
-            }
-            .feature-image-container {
-                height: 200px;
-            }
-        }
-        /* Smooth scroll */
-        html {
-            scroll-behavior: smooth;
-        }
-        /* Request Access Form */
-        #request-access {
-            padding: 6rem 2rem;
-            background: #f9f9f9;
-        }
-        #access-request-form input:focus {
-            outline: none;
-            border-color: #000;
-        }
-        #form-message {
-            font-weight: 500;
-        }
-        #form-message.success {
-            color: #28a745;
-        }
-        #form-message.error {
-            color: #dc3545;
+        .copyright {
+            color: #52525b;
+            font-size: 0.85rem;
         }
 
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .feature-row, .feature-row:nth-child(even) {
+                flex-direction: column;
+                gap: 2rem;
+                text-align: center;
+                margin-bottom: 5rem;
+            }
+            .pricing-card { padding: 2rem; }
+            .hero h1 { font-size: 2.5rem; }
+        }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <header>
+    <div class="glow-orb orb-1"></div>
+
+    <header id="header">
         <nav>
             <div class="logo">
-                <!-- Replace with your logo URL -->
-                <img src="./assets/maili-new-rm.png" class="logo-img" alt="Maili Logo" />
+                <img src="./assets/maili-new-rm.png" alt="Maili Logo" />
             </div>
             <ul class="nav-links">
                 <li><a href="#features">Features</a></li>
-                <li><a href="#upcoming-features">Coming Soon</a></li>
                 <li><a href="#pricing">Pricing</a></li>
-                <li><a href="#request-access">Request Access</a></li>
             </ul>
-            <a href="#request-access" class="cta-button">Request Access</a>
+            <a href="#pricing" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Download Now</a>
         </nav>
     </header>
 
-    <!-- Hero Section -->
-    <section id="hero" >
-        <img src="./assets/maili-new-rm.png" alt="Maili Hero Logo" class="hero-logo" />
-        <div class="hero">
-            <h1>Revolutionize Your Email Experience</h1>
-            <p>Connect multiple accounts, get AI-powered summaries, generate replies, filter spam, and schedule emails effortlessly. All in a sleek, intuitive interface.</p>
-            <a href="#request-access" class="hero-cta">Request Access</a>
+    <!-- Hero -->
+    <section id="hero">
+        <h1>Elevate Your Inbox Intelligence</h1>
+        <p>Transform Gmail into a powerful, AI-driven workspace. Maili is a Chrome extension that embeds an intelligent Kanban board, automated bulk actions, and smart context extraction directly inside your existing inbox. No new apps to learn—just unprecedented velocity.</p>
+        <div class="hero-actions">
+            <!-- Replace # with actual webstore or download link when ready -->
+            <a href="#pricing" class="btn-primary" style="padding: 0.8rem 1.75rem; font-size: 1rem;">Install Extension</a>
+            <a href="#features" class="btn-outline" style="padding: 0.8rem 1.75rem; font-size: 1rem;">Explore Features</a>
+        </div>
+        
+        <!-- Large Hero Dashboard Preview with Glass Effect -->
+        <div class="hero-preview glass-preview">
+            <img src="./assets/s1.png" alt="Maili Dashboard Preview" />
         </div>
     </section>
 
-    <!-- Features Section -->
+    <!-- Detailed Features -->
     <section id="features">
-        <h2 class="section-title">Powerful Features</h2>
-        <div class="features-grid">
-            <div class="feature-card">
-                <h3>Multi-Account Integration</h3>
-                <p>Seamlessly connect your Gmail, Outlook, and other accounts in one unified inbox. Manage everything from a single dashboard.</p>
-                <div class="feature-image-container">
-                    <img src="./assets/f1.jpg" alt="Multi-Account Integration" />
-                </div>
+        <div class="section-header">
+            <h2>Built for Focus and Speed</h2>
+            <p>We've re-imagined the email client from the ground up to integrate AI natively, not just as an afterthought.</p>
+        </div>
+
+        <div class="feature-row">
+            <div class="feature-content">
+                <h3>Kanban Task Management</h3>
+                <p>Turn your inbox into an actionable workspace. Instantly convert emails into draggable task cards. Track statuses, prioritize your day, and never let important follow-ups slip through the cracks again.</p>
             </div>
-            <div class="feature-card">
-                <h3>AI Email Summarization</h3>
-                <p>Get concise summaries of long threads and newsletters, saving you hours of reading time.</p>
-                <div class="feature-image-container">
-                    <img src="./assets/f2.jpg" alt="AI Email Summarization" />
-                </div>
+            <div class="feature-image-wrapper glass-preview">
+                <img src="./assets/s2.png" alt="Kanban Interface" />
             </div>
-            <div class="feature-card">
-                <h3>Text-to-Voice Reading</h3>
-                <p>Listen to your emails on the go with natural-sounding voice synthesis.</p>
-                <div class="feature-image-container">
-                    <img src="./assets/f2.jpg" alt="Text-to-Voice Reading" />
-                </div>
+        </div>
+
+        <div class="feature-row">
+            <div class="feature-content">
+                <h3>AI-Powered Bulk Actions</h3>
+                <p>Clean your inbox in seconds. Tell Maili to "Archive newsletters older than 30 days" or "Trash promotional emails from last week." The AI translates your intent into safe, precise bulk operations.</p>
             </div>
-            <div class="feature-card">
-                <h3>AI Reply Generation</h3>
-                <p>Craft professional responses in seconds with context-aware AI suggestions.</p>
-                <div class="feature-image-container">
-                    <img src="./assets/f3.jpg" alt="AI Reply Generation" />
-                </div>
+            <div class="feature-image-wrapper glass-preview">
+                <img src="./assets/s3.png" alt="AI Bulk Actions" />
             </div>
-            <div class="feature-card">
-                <h3>Advanced Spam Filtering</h3>
-                <p>Intelligent filters keep your inbox clean, learning from your preferences over time.</p>
-                <div class="feature-image-container">
-                    <img src="./assets/f4.jpg" alt="Advanced Spam Filtering" />
-                </div>
+        </div>
+
+        <div class="feature-row">
+            <div class="feature-content">
+                <h3>Smart Extraction & Context</h3>
+                <p>Maili reads the hidden action items inside long threads. With one click, extract summary points, to-dos, and context, allowing you to bypass reading endless replies and jump straight to execution.</p>
             </div>
-            <div class="feature-card">
-                <h3>Email Scheduling</h3>
-                <p>Compose now, send later. Schedule emails at optimal times for maximum impact.</p>
-                <div class="feature-image-container">
-                    <img src="./assets/f5.jpg" alt="Email Scheduling" />
-                </div>
+            <div class="feature-image-wrapper glass-preview">
+                <img src="./assets/s4.png" alt="Extraction panel" />
             </div>
         </div>
     </section>
 
-    <!-- Upcoming Features Section -->
-    <section id="upcoming-features">
-        <h2 class="section-title">Upcoming Features</h2>
-        <p style="text-align: center; margin-bottom: 3rem; opacity: 0.8; max-width: 600px; margin-left: auto; margin-right: auto;">
-            We're constantly working on new features to enhance your email experience. Here's what's coming soon:
-        </p>
-        <div class="upcoming-features-grid">
-            <div class="upcoming-feature-card">
-                <div class="upcoming-feature-icon">🎤</div>
-                <h3>Voice-to-Text Email Creation</h3>
-                <p>Dictate your emails naturally using your voice. Our advanced speech recognition technology converts your spoken words into perfectly formatted emails, making it easier than ever to compose messages on the go.</p>
-            </div>
-            <div class="upcoming-feature-card">
-                <div class="upcoming-feature-icon">📧</div>
-                <h3>Email Marketing Suite</h3>
-                <p>Create, manage, and track email campaigns with our comprehensive marketing tools. Design beautiful templates, segment your audience, and analyze performance metrics all in one place.</p>
-            </div>
-            <div class="upcoming-feature-card">
-                <div class="upcoming-feature-icon">🤖</div>
-                <h3>Advanced AI Automation</h3>
-                <p>Set up intelligent workflows that automatically categorize, prioritize, and respond to emails based on your preferences. Let AI handle routine tasks while you focus on what matters.</p>
-            </div>
-            <div class="upcoming-feature-card">
-                <div class="upcoming-feature-icon">🔒</div>
-                <h3>Enhanced Security & Privacy</h3>
-                <p>End-to-end encryption, advanced threat detection, and privacy controls to keep your communications secure. Your data stays private and protected at all times.</p>
-            </div>
-            <div class="upcoming-feature-card">
-                <div class="upcoming-feature-icon">📊</div>
-                <h3>Advanced Analytics Dashboard</h3>
-                <p>Get deep insights into your email habits with detailed analytics. Track response times, identify communication patterns, and optimize your email productivity.</p>
-            </div>
-            <div class="upcoming-feature-card">
-                <div class="upcoming-feature-icon">🌐</div>
-                <h3>Multi-Language Support</h3>
-                <p>Translate emails on the fly and communicate seamlessly in multiple languages. Break down language barriers with our intelligent translation features.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Pricing Section -->
+    <!-- Pricing -->
     <section id="pricing">
-        <h2 class="section-title">Choose Your Plan</h2>
+        <div class="section-header">
+            <h2>Transparent Pricing</h2>
+            <p>Start for free. Upgrade when your productivity demands it.</p>
+        </div>
         <div class="pricing-grid">
             <div class="pricing-card">
-                <h3>Freemium</h3>
-                <div class="price">$0<span>/mo</span></div>
-                <ul>
-                    <li>Multi-Account Integration (Gmail & Outlook)</li>
-                    <li>15 AI Email Summaries per month</li>
-                    <li>10 AI Reply Generations per month</li>
-                    <li>Basic Spam Filtering</li>
-                    <li>Email Scheduling</li>
-                    <li>Text-to-Voice Reading</li>
-                    <li>Email Analytics Dashboard</li>
-                    <li>Real-time Email Access</li>
+                <div class="pricing-header">
+                    <h3>Basic Compute</h3>
+                    <div class="price-val">$0<span>/mo</span></div>
+                </div>
+                <ul class="pricing-features">
+                    <li>15 AI Interactions / mo</li>
+                    <li>Basic Kanban Board</li>
+                    <li>Standard Inbox Overlay</li>
                     <li>Community Support</li>
                 </ul>
-                <a href="#request-access" class="plan-cta">Request Access</a>
+                <a href="#" class="btn-outline" style="text-align: center;">Get Started Free</a>
             </div>
             <div class="pricing-card popular">
-                <h3>Premium</h3>
-                <div class="price">$12<span>/mo</span></div>
-                <ul>
-                    <li>All Freemium Features</li>
-                    <li>Unlimited AI Email Summaries</li>
-                    <li>Unlimited AI Reply Generations</li>
-                    <li>Advanced AI Spam Filtering</li>
-                    <li>Priority Email Support</li>
-                    <li>Early Access to New Features</li>
-                    <li>Enhanced Analytics & Insights</li>
+                <div class="pricing-header">
+                    <h3>Pro Intelligence</h3>
+                    <div class="price-val">$12<span>/mo</span></div>
+                </div>
+                <ul class="pricing-features">
+                    <li>Bring your own API Keys (OpenAI/Anthropic)</li>
+                    <li>Unlimited Local Automations</li>
+                    <li>Unlimited Kanban & Storage</li>
+                    <li>Priority Access to New Features</li>
+                    <li>Direct Developer Support</li>
                 </ul>
-                <a href="#request-access" class="plan-cta">Request Access</a>
+                <a href="#" class="btn-primary">Upgrade to Pro</a>
             </div>
         </div>
     </section>
 
-    <!-- Request Access Section -->
-    <section id="request-access">
-        <div style="max-width: 600px; margin: 0 auto; padding: 6rem 2rem;">
-            <h2 class="section-title">Request Access</h2>
-            <p style="text-align: center; margin-bottom: 2rem; opacity: 0.8;">
-                Maili is currently in private beta. Enter your Gmail address below and we'll send you access instructions.
-            </p>
-            <form id="access-request-form" style="display: flex; flex-direction: column; gap: 1rem;">
-                <input 
-                    type="email" 
-                    id="gmail-address" 
-                    placeholder="your.email@gmail.com" 
-                    required
-                    pattern="[a-zA-Z0-9._%+-]+@gmail\.com"
-                    style="padding: 1rem; border: 1px solid #ddd; border-radius: 50px; font-size: 1rem; text-align: center;"
-                />
-                <input 
-                    type="text" 
-                    id="user-name" 
-                    placeholder="Your Name (Optional)" 
-                    style="padding: 1rem; border: 1px solid #ddd; border-radius: 50px; font-size: 1rem; text-align: center;"
-                />
-                <button 
-                    type="submit" 
-                    class="hero-cta"
-                    style="margin-top: 1rem; cursor: pointer; border: none;"
-                >
-                    Request Access
-                </button>
-                <div id="form-message" style="text-align: center; margin-top: 1rem; min-height: 2rem;"></div>
-            </form>
-        </div>
+    <!-- Connect / Feedback Block -->
+    <section class="connect-section" id="connect">
+        <h3>We read every message.</h3>
+        <p>Found a bug? Have a brilliant feature idea? We are actively building this with our community. Reach out directly.</p>
+        <button id="connect-btn" class="btn-primary" style="padding: 1rem 2rem; font-size: 1rem;">Contact Developer</button>
     </section>
 
-    <!-- Footer -->
     <footer>
-        <div class="footer-content">
-            <ul class="footer-links">
-                <li><a href="#features">Features</a></li>
-                <li><a href="#pricing">Pricing</a></li>
-                <li><a href="./privacy.html">Privacy</a></li>
-                <li><a href="./terms.html">Terms</a></li>
-                <!-- <li><a href="./contact.html">Contact</a></li> -->
-            </ul>
-            <p>&copy; 2025 Maili. Built with ❤️ for better email.</p>
-        </div>
+        <ul class="footer-links">
+            <li><a href="#features">Features</a></li>
+            <li><a href="#pricing">Pricing</a></li>
+            <li><a href="./privacy.html">Privacy</a></li>
+            <li><a href="./terms.html">Terms</a></li>
+        </ul>
+        <div class="copyright">&copy; 2026 Maili Interface. All rights reserved.</div>
     </footer>
 
     <script>
-        // Simple smooth scroll for nav links
+        // Header scroll behavior
+        const header = document.getElementById('header');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) header.classList.add('scrolled');
+            else header.classList.remove('scrolled');
+        });
+
+        // Smooth scroll
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
                 const target = document.querySelector(this.getAttribute('href'));
                 if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth'
-                    });
+                    target.scrollIntoView({ behavior: 'smooth' });
                 }
             });
         });
 
-        // Header scroll effect for transparency
-        window.addEventListener('scroll', () => {
-            const header = document.querySelector('header');
-            if (window.scrollY > 100) {
-                header.classList.add('scrolled');
-            } else {
-                header.classList.remove('scrolled');
-            }
+        // Anti-spam mailto generator for Connect button
+        // Base64 protects the email from simple plaintext scraping bots
+        document.getElementById('connect-btn').addEventListener('click', () => {
+            const email = atob('cmlqaW4uY2hhdHMuMUBnbWFpbC5jb20=');
+            window.location.href = `mailto:${email}?subject=Maili Feedback / Issue`;
         });
-
-        // Initialize EmailJS
-        emailjs.init("6fSQuZOWa-zHBkx68");
-
-        // Google Sheets Configuration
-        // REPLACE THIS WITH YOUR GOOGLE APPS SCRIPT WEB APP URL
-        // See instructions in GOOGLE_SHEETS_SETUP.md
-        const GOOGLE_SHEETS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbylsPZKIt7drrtBCKDKh6qY_U_57AZKwT6dlPn2OXbMGWH1RMxeOSyufLb0uuZOZ71smQ/exec';
-
-        // Access Request Form Handler
-        document.getElementById('access-request-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const gmailAddress = document.getElementById('gmail-address').value.trim();
-            const userName = document.getElementById('user-name').value.trim();
-            const messageDiv = document.getElementById('form-message');
-            const submitButton = this.querySelector('button[type="submit"]');
-            
-            // Validate Gmail address
-            if (!gmailAddress.endsWith('@gmail.com') && !gmailAddress.endsWith('@googlemail.com')) {
-                messageDiv.textContent = 'Please enter a valid Gmail address (@gmail.com or @googlemail.com)';
-                messageDiv.className = 'error';
-                return;
-            }
-            
-            // Disable button and show loading
-            submitButton.disabled = true;
-            submitButton.textContent = 'Sending...';
-            messageDiv.textContent = '';
-            messageDiv.className = '';
-            
-            try {
-                // Get client IP address
-                let clientIP = 'Unable to fetch';
-                try {
-                    const ipResponse = await fetch('https://api.ipify.org?format=json');
-                    const ipData = await ipResponse.json();
-                    clientIP = ipData.ip;
-                } catch (ipError) {
-                    console.log('Could not fetch IP address');
-                }
-                
-                const timestamp = new Date().toISOString();
-                const requestDate = new Date().toLocaleString();
-                
-                // Prepare data for Google Sheets
-                const formData = {
-                    name: userName || 'Not provided',
-                    email: gmailAddress,
-                    status: 'Pending',
-                    timestamp: timestamp,
-                    request_date: requestDate,
-                    ip_address: clientIP
-                };
-                
-                // Save to Google Sheets FIRST (primary method)
-                let sheetsSuccess = false;
-                if (GOOGLE_SHEETS_WEB_APP_URL && GOOGLE_SHEETS_WEB_APP_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
-                    try {
-                        // Use fetch with no-cors mode for Google Apps Script
-                        await fetch(GOOGLE_SHEETS_WEB_APP_URL, {
-                            method: 'POST',
-                            mode: 'no-cors', // Google Apps Script doesn't support CORS
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify(formData)
-                        });
-                        sheetsSuccess = true;
-                        // Note: With no-cors mode, we can't verify the response, but assume success
-                        console.log('Data sent to Google Sheets');
-                    } catch (sheetsError) {
-                        console.error('Error saving to Google Sheets:', sheetsError);
-                        // Continue anyway - try EmailJS as backup
-                    }
-                } else {
-                    // If Google Sheets URL not configured, mark as success to allow EmailJS to proceed
-                    sheetsSuccess = true;
-                }
-                
-                // Try to send email using EmailJS (secondary/optional notification)
-                let emailSuccess = false;
-                try {
-                    const templateParams = {
-                        email: gmailAddress,
-                        name: userName || 'Not provided',
-                        time: requestDate,
-                        timestamp: timestamp,
-                        request_date: requestDate,
-                        ip_address: clientIP,
-                        user_agent: navigator.userAgent
-                    };
-                    
-                    const emailResponse = await emailjs.send(
-                        'service_wrf8xim',
-                        'template_vkyy4u1',
-                        templateParams
-                    );
-                    
-                    if (emailResponse && emailResponse.status === 200) {
-                        emailSuccess = true;
-                        console.log('Email notification sent via EmailJS');
-                    }
-                } catch (emailError) {
-                    // EmailJS failed (could be limit exceeded, network error, etc.)
-                    console.warn('EmailJS notification failed (this is okay):', emailError);
-                    // Don't throw error - continue with success if Sheets worked
-                }
-                
-                // Show success if Google Sheets update worked (primary method)
-                // EmailJS is just a bonus notification, not required
-                if (sheetsSuccess) {
-                    messageDiv.textContent = 'Request submitted successfully! We\'ll review your request and send you access instructions via email soon.';
-                    messageDiv.className = 'success';
-                    
-                    // Reset form
-                    this.reset();
-                } else {
-                    // Only show error if both methods failed
-                    throw new Error('Unable to submit request. Please try again later.');
-                }
-                
-            } catch (error) {
-                console.error('Error submitting request:', error);
-                messageDiv.textContent = 'Error submitting request. Please try again or contact us directly.';
-                messageDiv.className = 'error';
-            } finally {
-                // Re-enable button
-                submitButton.disabled = false;
-                submitButton.textContent = 'Request Access';
-            }
-        });
-        
     </script>
 </body>
 </html>
