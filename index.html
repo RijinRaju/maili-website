@@ -2,568 +2,841 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/svg+xml" href="./assets/maili-icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maili - AI-Powered Email Intelligence</title>
+    <meta name="description" content="Maili adds Kanban boards and AI email workflows directly inside Gmail.">
+    <link rel="icon" type="image/png" href="./assets/maili-new-rm.png">
+    <title>Maili - AI Kanban for Gmail</title>
     <style>
-        /* Modern CSS Reset & Variables */
         :root {
-            --bg-color: #050505;
-            --surface-color: rgba(255, 255, 255, 0.02);
-            --surface-border: rgba(255, 255, 255, 0.08);
-            --text-primary: #ffffff;
-            --text-secondary: #a1a1aa;
-            --btn-bg: #ffffff;
-            --btn-text: #000000;
-            --btn-hover: #f1f1f1;
-            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color-scheme: dark;
+            --bg: #020503;
+            --bg-soft: #07100c;
+            --panel: rgba(255, 255, 255, 0.055);
+            --panel-strong: rgba(255, 255, 255, 0.09);
+            --line: rgba(213, 255, 232, 0.16);
+            --line-strong: rgba(133, 255, 190, 0.36);
+            --text: #f4fff8;
+            --muted: #a9b9b0;
+            --soft: #6f8278;
+            --green: #5cff9d;
+            --green-deep: #00a85c;
+            --blue: #81b7ff;
+            --red: #ff6d78;
+            --shadow: rgba(0, 0, 0, 0.55);
+            --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
 
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
-            font-family: var(--font-family);
-            line-height: 1.6;
-            color: var(--text-primary);
-            background-color: var(--bg-color);
-            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
             overflow-x: hidden;
+            background:
+                radial-gradient(ellipse at 50% -22%, rgba(92, 255, 157, 0.28), transparent 38%),
+                radial-gradient(ellipse at 85% 22%, rgba(0, 168, 92, 0.16), transparent 34%),
+                radial-gradient(ellipse at 10% 36%, rgba(255, 109, 120, 0.08), transparent 26%),
+                linear-gradient(180deg, #020503 0%, #030706 42%, #050708 100%);
+            color: var(--text);
+            font-family: var(--font);
+            line-height: 1.55;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        body::before {
+            opacity: 0.48;
+            background-image:
+                radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 1px, transparent 1.5px),
+                radial-gradient(circle, rgba(92, 255, 157, 0.9) 0 1px, transparent 1.5px),
+                radial-gradient(circle, rgba(255, 109, 120, 0.65) 0 1px, transparent 1.5px);
+            background-position: 12px 36px, 74px 118px, 190px 44px;
+            background-size: 220px 190px, 310px 260px, 420px 340px;
+        }
+
+        body::after {
+            background:
+                linear-gradient(rgba(92, 255, 157, 0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(92, 255, 157, 0.025) 1px, transparent 1px);
+            background-size: 72px 72px;
+            mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent 78%);
         }
 
         a {
-            text-decoration: none;
             color: inherit;
+            text-decoration: none;
         }
 
-        /* Abstract Glow Effects */
-        .glow-orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(120px);
-            z-index: -1;
-            opacity: 0.4;
-            pointer-events: none;
-        }
-        .orb-1 {
-            top: -10%; left: 50%; transform: translateX(-50%);
-            width: 800px; height: 500px;
-            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0) 70%);
+        button,
+        a {
+            -webkit-tap-highlight-color: transparent;
         }
 
-        /* Header / Nav */
-        header {
+        .page-shell {
+            position: relative;
+            isolation: isolate;
+        }
+
+        .nav {
             position: fixed;
             top: 0;
+            left: 0;
             width: 100%;
-            background: rgba(5, 5, 5, 0.5);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            z-index: 20;
             border-bottom: 1px solid transparent;
-            z-index: 1000;
-            padding: 1.25rem 0;
-            transition: all 0.3s ease;
-        }
-        header.scrolled {
-            border-bottom: 1px solid var(--surface-border);
-            background: rgba(5, 5, 5, 0.85);
-            padding: 1rem 0;
+            transition: background 180ms ease, border-color 180ms ease;
         }
 
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 1200px;
+        .nav.is-scrolled {
+            border-color: rgba(213, 255, 232, 0.1);
+            background: rgba(2, 5, 3, 0.72);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+        }
+
+        .nav-inner {
+            width: min(1180px, calc(100% - 36px));
+            height: 76px;
             margin: 0 auto;
-            padding: 0 2rem;
-        }
-
-        .logo {
             display: flex;
             align-items: center;
-            gap: 12px;
-            font-size: 1.25rem;
-            font-weight: 600;
-            letter-spacing: -0.02em;
+            justify-content: space-between;
+            gap: 24px;
         }
-        .logo img {
-            height: 32px;
-            width: auto;
-            border-radius: 6px;
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 11px;
+            min-width: max-content;
+            font-weight: 750;
+            letter-spacing: 0;
+        }
+
+        .brand-mark {
+            width: 38px;
+            height: 38px;
+            display: grid;
+            place-items: center;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.035));
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 16px 34px rgba(0, 0, 0, 0.35);
+        }
+
+        .brand-mark img {
+            width: 25px;
+            height: 25px;
+            object-fit: contain;
+            filter: invert(1) brightness(2.2);
+        }
+
+        .brand span {
+            font-size: 1.05rem;
         }
 
         .nav-links {
             display: flex;
-            list-style: none;
-            gap: 2.5rem;
-        }
-        .nav-links a {
+            align-items: center;
+            gap: 26px;
+            color: var(--muted);
             font-size: 0.9rem;
-            font-weight: 500;
-            color: var(--text-secondary);
-            transition: color 0.2s ease;
-        }
-        .nav-links a:hover {
-            color: var(--text-primary);
+            font-weight: 600;
         }
 
-        /* Pure White Buttons */
-        .btn-primary {
-            background: var(--btn-bg);
-            color: var(--btn-text);
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            transition: all 0.2s ease;
-            cursor: pointer;
+        .nav-links a {
+            transition: color 160ms ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--text);
+        }
+
+        .btn {
+            min-height: 44px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+            gap: 10px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            padding: 0 20px;
+            font-size: 0.92rem;
+            font-weight: 750;
+            line-height: 1;
+            white-space: nowrap;
+            transition: transform 170ms ease, border-color 170ms ease, background 170ms ease, box-shadow 170ms ease;
         }
-        .btn-primary:hover {
-            background: var(--btn-hover);
+
+        .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 0 25px rgba(255, 255, 255, 0.3);
         }
 
-        .btn-outline {
-            background: transparent;
-            color: var(--text-primary);
-            border: 1px solid var(--surface-border);
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-        .btn-outline:hover {
-            background: var(--surface-color);
-            border-color: rgba(255, 255, 255, 0.2);
+        .btn-primary {
+            color: #031108;
+            background: linear-gradient(135deg, #f4fff8 0%, var(--green) 58%, #0ee684 100%);
+            box-shadow: 0 18px 50px rgba(92, 255, 157, 0.22);
         }
 
-        /* Hero Section */
-        #hero {
-            position: relative;
+        .btn-primary:hover {
+            box-shadow: 0 24px 70px rgba(92, 255, 157, 0.3);
+        }
+
+        .btn-secondary {
+            color: var(--text);
+            border-color: var(--line);
+            background: rgba(255, 255, 255, 0.045);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--line-strong);
+            background: rgba(255, 255, 255, 0.075);
+        }
+
+        .hero {
+            width: min(1240px, calc(100% - 36px));
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            margin: 0 auto;
+            padding: 122px 0 62px;
+            display: grid;
+            align-content: center;
+            gap: 42px;
+        }
+
+        .hero-copy {
+            max-width: 930px;
+            margin: 0 auto;
             text-align: center;
-            padding: 120px 2rem 4rem;
         }
 
-        .hero h1 {
-            font-size: clamp(3rem, 6vw, 5.5rem);
-            font-weight: 700;
-            letter-spacing: -0.04em;
-            line-height: 1.1;
-            margin-bottom: 1.5rem;
-            max-width: 900px;
-            background: linear-gradient(180deg, #FFFFFF 0%, #a1a1aa 100%);
+        .eyebrow {
+            width: fit-content;
+            margin: 0 auto 22px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 8px 13px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #d8ffe7;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+            font-size: 0.82rem;
+            font-weight: 750;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 18px var(--green);
+        }
+
+        h1 {
+            max-width: 930px;
+            margin: 0 auto;
+            font-size: clamp(2.7rem, 5.7vw, 5.45rem);
+            font-weight: 850;
+            line-height: 0.98;
+            letter-spacing: 0;
+        }
+
+        .hero-gradient {
+            display: block;
+            color: transparent;
+            background: linear-gradient(95deg, #fff 0%, #d7ffe7 32%, #5cff9d 66%, #92ffcb 100%);
             -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 60px rgba(92, 255, 157, 0.16);
         }
 
-        .hero p {
-            font-size: clamp(1.1rem, 2vw, 1.35rem);
-            color: var(--text-secondary);
-            margin-bottom: 4rem;
-            max-width: 700px;
-            line-height: 1.8;
+        .hero-copy p {
+            max-width: 720px;
+            margin: 22px auto 0;
+            color: var(--muted);
+            font-size: clamp(0.98rem, 1.35vw, 1.12rem);
         }
 
         .hero-actions {
+            margin-top: 30px;
             display: flex;
-            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 14px;
+        }
+
+        .trust-row {
+            margin-top: 23px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            color: var(--soft);
+            font-size: 0.88rem;
+            font-weight: 650;
+        }
+
+        .trust-row span {
+            border: 1px solid rgba(213, 255, 232, 0.1);
+            border-radius: 999px;
+            padding: 7px 12px;
+            background: rgba(0, 0, 0, 0.18);
+        }
+
+        .hero-product {
+            position: relative;
+            margin: 0 auto;
+            width: min(1160px, 100%);
+        }
+
+        .hero-product::before {
+            content: "";
+            position: absolute;
+            inset: -1px;
+            border-radius: 26px;
+            padding: 1px;
+            background: linear-gradient(120deg, transparent 0%, rgba(92, 255, 157, 0.8) 32%, rgba(255, 255, 255, 0.42) 50%, transparent 72%);
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .glass {
+            border: 1px solid var(--line);
+            border-radius: 26px;
+            background:
+                linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.035)),
+                rgba(0, 0, 0, 0.28);
+            box-shadow: 0 36px 120px var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+
+        .browser-frame {
+            overflow: hidden;
+            padding: 12px;
+        }
+
+        .browser-bar {
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 0 8px 10px;
+        }
+
+        .lights {
+            display: flex;
+            gap: 8px;
+        }
+
+        .lights i {
+            width: 10px;
+            height: 10px;
+            display: block;
+            border-radius: 50%;
+            background: var(--red);
+        }
+
+        .lights i:nth-child(2) {
+            background: #ffcb5c;
+        }
+
+        .lights i:nth-child(3) {
+            background: var(--green);
+        }
+
+        .bar-pill {
+            flex: 1;
+            max-width: 520px;
+            height: 26px;
+            border: 1px solid rgba(213, 255, 232, 0.1);
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.22);
+            color: var(--soft);
+            display: flex;
             align-items: center;
             justify-content: center;
-            margin-top: 1.5rem;
+            font-size: 0.78rem;
+            font-weight: 650;
         }
-        
-        /* Glassmorphism Screenshot effect (OpenClaw style) */
-        .glass-preview {
+
+        .browser-frame img {
             width: 100%;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
-            padding: 12px;
-            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8), 
-                        inset 0 1px 1px rgba(255, 255, 255, 0.15),
-                        0 0 40px rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            position: relative;
-        }
-        .glass-preview img {
-            width: 100%;
-            border-radius: 12px;
             display: block;
-            border: 1px solid rgba(0,0,0,0.5);
-        }
-        /* Top shiny edge */
-        .glass-preview::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            z-index: 10;
+            border-radius: 16px;
+            border: 1px solid rgba(0, 0, 0, 0.3);
         }
 
-        .hero-preview {
-            margin-top: 5rem;
-            max-width: 1100px;
-            transform: perspective(1200px) rotateX(4deg);
-            z-index: 10;
-        }
-
-        /* Sections Grid */
-        section {
-            padding: 8rem 2rem;
-            position: relative;
-            max-width: 1200px;
+        .section {
+            width: min(1180px, calc(100% - 36px));
             margin: 0 auto;
+            padding: 92px 0;
         }
 
-        .section-header {
-            text-align: center;
-            margin-bottom: 5rem;
-        }
-        .section-header h2 {
-            font-size: 3rem;
-            font-weight: 700;
-            letter-spacing: -0.04em;
-            margin-bottom: 1rem;
-            background: linear-gradient(180deg, #FFFFFF 0%, #a1a1aa 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .section-header p {
-            font-size: 1.15rem;
-            color: var(--text-secondary);
-            max-width: 600px;
-            margin: 0 auto;
+        .section-head {
+            max-width: 720px;
+            margin-bottom: 38px;
         }
 
-        /* Feature Rows */
-        .feature-row {
-            display: flex;
-            align-items: center;
-            gap: 4rem;
-            margin-bottom: 8rem;
-        }
-        .feature-row:nth-child(even) {
-            flex-direction: row-reverse;
-        }
-        .feature-content {
-            flex: 1;
-        }
-        .feature-content h3 {
-            font-size: 2rem;
-            font-weight: 600;
-            letter-spacing: -0.03em;
-            margin-bottom: 1rem;
-        }
-        .feature-content p {
-            font-size: 1.1rem;
-            color: var(--text-secondary);
-            line-height: 1.7;
-            margin-bottom: 2rem;
-        }
-        .feature-image-wrapper {
-            flex: 1;
+        .section-label {
+            margin-bottom: 12px;
+            color: var(--green);
+            font-size: 0.78rem;
+            font-weight: 850;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
         }
 
-        /* Pricing */
-        .pricing-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 2rem;
-            max-width: 900px;
-            margin: 0 auto;
-        }
-        .pricing-card {
-            background: var(--surface-color);
-            border: 1px solid var(--surface-border);
-            border-radius: 20px;
-            padding: 3rem;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            backdrop-filter: blur(10px);
-        }
-        .pricing-card.popular {
-            border-color: rgba(255, 255, 255, 0.2);
-            background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 100%);
-            box-shadow: 0 0 30px rgba(255,255,255,0.03);
-        }
-        .pricing-header {
-            margin-bottom: 2rem;
-            padding-bottom: 2rem;
-            border-bottom: 1px solid var(--surface-border);
-        }
-        .pricing-header h3 {
-            font-size: 1.25rem;
-            color: var(--text-secondary);
-            font-weight: 500;
-            margin-bottom: 1rem;
-        }
-        .price-val {
-            font-size: 3.5rem;
-            font-weight: 700;
-            letter-spacing: -0.04em;
+        h2 {
+            font-size: clamp(2rem, 3.8vw, 3.8rem);
+            font-weight: 830;
             line-height: 1;
-        }
-        .price-val span {
-            font-size: 1rem;
-            color: var(--text-secondary);
-            font-weight: 400;
             letter-spacing: 0;
         }
-        .pricing-features {
-            list-style: none;
-            flex-grow: 1;
-            margin-bottom: 3rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-        .pricing-features li {
-            font-size: 0.95rem;
-            color: #d4d4d8;
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-        }
-        .pricing-features li::before {
-            content: '\2713';
-            color: var(--text-primary);
-        }
-        
-        .pricing-card .btn-primary {
-            width: 100%;
-            padding: 1rem;
+
+        .section-head p {
+            margin-top: 18px;
+            color: var(--muted);
+            font-size: 1.04rem;
+            max-width: 610px;
         }
 
-        /* Connect / Feedback Block */
-        .connect-section {
-            padding: 6rem 2rem;
-            text-align: center;
-            background: radial-gradient(circle at center, rgba(255,255,255,0.03) 0%, transparent 70%);
-            border-top: 1px solid var(--surface-border);
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
         }
-        .connect-section h3 {
-            font-size: 2rem;
-            letter-spacing: -0.03em;
-            margin-bottom: 1rem;
-            font-weight: 600;
+
+        .feature-card {
+            min-height: 250px;
+            padding: 24px;
+            border-radius: 18px;
+            border: 1px solid var(--line);
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
+                rgba(0, 0, 0, 0.22);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
         }
-        .connect-section p {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-            margin-bottom: 2.5rem;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
+
+        .feature-icon {
+            width: 46px;
+            height: 46px;
+            margin-bottom: 23px;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(92, 255, 157, 0.26);
+            border-radius: 13px;
+            background: rgba(92, 255, 157, 0.08);
+            color: var(--green);
         }
-        
-        /* Footer */
-        footer {
-            border-top: 1px solid var(--surface-border);
-            padding: 4rem 2rem;
-            text-align: center;
+
+        .feature-icon svg {
+            width: 22px;
+            height: 22px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
+
+        .feature-card h3 {
+            margin-bottom: 12px;
+            font-size: 1.16rem;
+            letter-spacing: 0;
+        }
+
+        .feature-card p {
+            color: var(--muted);
+            font-size: 0.96rem;
+        }
+
+        .showcase {
+            display: grid;
+            grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+            gap: 26px;
+            align-items: center;
+        }
+
+        .workflow {
+            padding: 28px;
+        }
+
+        .workflow-list {
+            display: grid;
+            gap: 14px;
+        }
+
+        .workflow-item {
+            display: grid;
+            grid-template-columns: 42px 1fr;
+            gap: 16px;
+            padding: 16px;
+            border: 1px solid rgba(213, 255, 232, 0.12);
+            border-radius: 14px;
+            background: rgba(0, 0, 0, 0.22);
+        }
+
+        .workflow-number {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            background: rgba(92, 255, 157, 0.1);
+            color: var(--green);
+            font-weight: 850;
+        }
+
+        .workflow-item h3 {
+            margin-bottom: 4px;
+            font-size: 1rem;
+        }
+
+        .workflow-item p {
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+
+        .screenshot-stack {
+            display: grid;
+            gap: 16px;
+        }
+
+        .screenshot-card {
+            overflow: hidden;
+            padding: 10px;
+            border-radius: 20px;
+        }
+
+        .screenshot-card img {
+            width: 100%;
+            display: block;
+            border-radius: 12px;
+        }
+
+        .screenshot-card:nth-child(2) {
+            width: 82%;
+            justify-self: end;
+        }
+
+        .install-band {
+            width: min(1180px, calc(100% - 36px));
+            margin: 28px auto 0;
+            padding: 38px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            gap: 28px;
+            border-radius: 24px;
+            border: 1px solid rgba(92, 255, 157, 0.25);
+            background:
+                linear-gradient(135deg, rgba(92, 255, 157, 0.16), rgba(255, 255, 255, 0.045) 42%, rgba(0, 0, 0, 0.18)),
+                rgba(3, 12, 8, 0.8);
+            box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+        }
+
+        .install-band h2 {
+            max-width: 760px;
+            font-size: clamp(1.85rem, 3.3vw, 3.1rem);
+        }
+
+        .install-band p {
+            max-width: 620px;
+            margin-top: 12px;
+            color: #c8d9cf;
+        }
+
+        .footer {
+            width: min(1180px, calc(100% - 36px));
+            margin: 0 auto;
+            padding: 56px 0 42px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            color: var(--soft);
+            border-top: 1px solid rgba(213, 255, 232, 0.11);
+        }
+
         .footer-links {
             display: flex;
-            justify-content: center;
-            gap: 2rem;
-            list-style: none;
-            margin-bottom: 2rem;
-        }
-        .footer-links a {
-            color: var(--text-secondary);
+            gap: 20px;
             font-size: 0.9rem;
-            transition: color 0.2s;
-        }
-        .footer-links a:hover {
-            color: var(--text-primary);
-        }
-        .copyright {
-            color: #52525b;
-            font-size: 0.85rem;
+            font-weight: 650;
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .nav-links { display: none; }
-            .feature-row, .feature-row:nth-child(even) {
-                flex-direction: column;
-                gap: 2rem;
-                text-align: center;
-                margin-bottom: 5rem;
+        .footer a:hover {
+            color: var(--text);
+        }
+
+        @media (max-width: 900px) {
+            .nav-links {
+                display: none;
             }
-            .pricing-card { padding: 2rem; }
-            .hero h1 { font-size: 2.5rem; }
+
+            .hero {
+                padding-top: 108px;
+            }
+
+            .feature-grid,
+            .showcase,
+            .install-band {
+                grid-template-columns: 1fr;
+            }
+
+            .screenshot-card:nth-child(2) {
+                width: 100%;
+            }
+
+            .install-band {
+                padding: 28px;
+            }
+        }
+
+        @media (max-width: 620px) {
+            .nav-inner,
+            .hero,
+            .section,
+            .install-band,
+            .footer {
+                width: min(100% - 24px, 1180px);
+            }
+
+            .nav-inner {
+                height: 68px;
+            }
+
+            .nav .btn {
+                display: none;
+            }
+
+            h1 {
+                font-size: clamp(2.35rem, 13vw, 3.35rem);
+            }
+
+            .hero-copy p {
+                font-size: 0.96rem;
+            }
+
+            .hero-actions {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .browser-frame {
+                padding: 8px;
+                border-radius: 18px;
+            }
+
+            .browser-bar {
+                display: none;
+            }
+
+            .browser-frame img {
+                border-radius: 12px;
+            }
+
+            .section {
+                padding: 66px 0;
+            }
+
+            .feature-card {
+                min-height: 0;
+            }
+
+            .footer {
+                align-items: flex-start;
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="glow-orb orb-1"></div>
-
-    <header id="header">
-        <nav>
-            <div class="logo">
-                <img src="./assets/maili-new-rm.png" alt="Maili Logo" />
+    <div class="page-shell">
+        <header class="nav" id="nav">
+            <div class="nav-inner">
+                <a class="brand" href="#top" aria-label="Maili home">
+                    <span class="brand-mark"><img src="./assets/maili-new-rm.png" alt=""></span>
+                    <span>Maili</span>
+                </a>
+                <nav class="nav-links" aria-label="Primary navigation">
+                    <a href="#features">Features</a>
+                    <a href="#workflow">Workflow</a>
+                    <a href="#install">Install</a>
+                </nav>
+                <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/ldjhcbbeaploocbmldnbloainllgebel?utm_source=item-share-cb" target="_blank" rel="noopener noreferrer">Add to Chrome</a>
             </div>
-            <ul class="nav-links">
-                <li><a href="#features">Features</a></li>
-                <li><a href="#pricing">Pricing</a></li>
-            </ul>
-            <a href="#pricing" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Download Now</a>
-        </nav>
-    </header>
+        </header>
 
-    <!-- Hero -->
-    <section id="hero">
-        <h1>Elevate Your Inbox Intelligence</h1>
-        <p>Transform Gmail into a powerful, AI-driven workspace. Maili is a Chrome extension that embeds an intelligent Kanban board, automated bulk actions, and smart context extraction directly inside your existing inbox. No new apps to learn—just unprecedented velocity.</p>
-        <div class="hero-actions">
-            <!-- Replace # with actual webstore or download link when ready -->
-            <a href="#pricing" class="btn-primary" style="padding: 0.8rem 1.75rem; font-size: 1rem;">Install Extension</a>
-            <a href="#features" class="btn-outline" style="padding: 0.8rem 1.75rem; font-size: 1rem;">Explore Features</a>
-        </div>
-        
-        <!-- Large Hero Dashboard Preview with Glass Effect -->
-        <div class="hero-preview glass-preview">
-            <img src="./assets/s1.png" alt="Maili Dashboard Preview" />
-        </div>
-    </section>
-
-    <!-- Detailed Features -->
-    <section id="features">
-        <div class="section-header">
-            <h2>Built for Focus and Speed</h2>
-            <p>We've re-imagined the email client from the ground up to integrate AI natively, not just as an afterthought.</p>
-        </div>
-
-        <div class="feature-row">
-            <div class="feature-content">
-                <h3>Kanban Task Management</h3>
-                <p>Turn your inbox into an actionable workspace. Instantly convert emails into draggable task cards. Track statuses, prioritize your day, and never let important follow-ups slip through the cracks again.</p>
-            </div>
-            <div class="feature-image-wrapper glass-preview">
-                <img src="./assets/s2.png" alt="Kanban Interface" />
-            </div>
-        </div>
-
-        <div class="feature-row">
-            <div class="feature-content">
-                <h3>AI-Powered Bulk Actions</h3>
-                <p>Clean your inbox in seconds. Tell Maili to "Archive newsletters older than 30 days" or "Trash promotional emails from last week." The AI translates your intent into safe, precise bulk operations.</p>
-            </div>
-            <div class="feature-image-wrapper glass-preview">
-                <img src="./assets/s3.png" alt="AI Bulk Actions" />
-            </div>
-        </div>
-
-        <div class="feature-row">
-            <div class="feature-content">
-                <h3>Smart Extraction & Context</h3>
-                <p>Maili reads the hidden action items inside long threads. With one click, extract summary points, to-dos, and context, allowing you to bypass reading endless replies and jump straight to execution.</p>
-            </div>
-            <div class="feature-image-wrapper glass-preview">
-                <img src="./assets/s4.png" alt="Extraction panel" />
-            </div>
-        </div>
-    </section>
-
-    <!-- Pricing -->
-    <section id="pricing">
-        <div class="section-header">
-            <h2>Transparent Pricing</h2>
-            <p>Start for free. Upgrade when your productivity demands it.</p>
-        </div>
-        <div class="pricing-grid">
-            <div class="pricing-card">
-                <div class="pricing-header">
-                    <h3>Basic Compute</h3>
-                    <div class="price-val">$0<span>/mo</span></div>
+        <main id="top">
+            <section class="hero" aria-labelledby="hero-title">
+                <div class="hero-copy">
+                    <div class="eyebrow"><span class="status-dot"></span> Gmail extension for focused inbox work</div>
+                    <h1 id="hero-title">Turn Gmail into an <span class="hero-gradient">AI Kanban command center.</span></h1>
+                    <p>Maili adds a visual task board, AI-powered extraction, and fast inbox actions directly inside Gmail, so emails become organized work instead of another tab to manage.</p>
+                    <div class="hero-actions">
+                        <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/ldjhcbbeaploocbmldnbloainllgebel?utm_source=item-share-cb" target="_blank" rel="noopener noreferrer">Add to Chrome</a>
+                        <a class="btn btn-secondary" href="#features">See What It Does</a>
+                    </div>
+                    <div class="trust-row" aria-label="Maili highlights">
+                        <span>Inside Gmail</span>
+                        <span>Kanban board</span>
+                        <span>AI extraction</span>
+                        <span>Chrome Web Store</span>
+                    </div>
                 </div>
-                <ul class="pricing-features">
-                    <li>15 AI Interactions / mo</li>
-                    <li>Basic Kanban Board</li>
-                    <li>Standard Inbox Overlay</li>
-                    <li>Community Support</li>
-                </ul>
-                <a href="#" class="btn-outline" style="text-align: center;">Get Started Free</a>
-            </div>
-            <div class="pricing-card popular">
-                <div class="pricing-header">
-                    <h3>Pro Intelligence</h3>
-                    <div class="price-val">$12<span>/mo</span></div>
+
+                <div class="hero-product">
+                    <div class="browser-frame glass">
+                        <div class="browser-bar">
+                            <div class="lights" aria-hidden="true"><i></i><i></i><i></i></div>
+                            <div class="bar-pill">maili.in / Gmail workspace preview</div>
+                            <div class="lights" aria-hidden="true"><i></i><i></i><i></i></div>
+                        </div>
+                        <img src="./assets/s1.png" alt="Maili inside Gmail with inbox task labels and a Kanban control bar">
+                    </div>
                 </div>
-                <ul class="pricing-features">
-                    <li>Bring your own API Keys (OpenAI/Anthropic)</li>
-                    <li>Unlimited Local Automations</li>
-                    <li>Unlimited Kanban & Storage</li>
-                    <li>Priority Access to New Features</li>
-                    <li>Direct Developer Support</li>
-                </ul>
-                <a href="#" class="btn-primary">Upgrade to Pro</a>
+            </section>
+
+            <section class="section" id="features">
+                <div class="section-head">
+                    <div class="section-label">Features</div>
+                    <h2>Everything important stays where the email already is.</h2>
+                    <p>Maili layers productivity tools over Gmail without replacing your inbox or forcing a new workflow.</p>
+                </div>
+
+                <div class="feature-grid">
+                    <article class="feature-card">
+                        <div class="feature-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M4 5h16"></path><path d="M4 12h16"></path><path d="M4 19h16"></path><path d="M8 5v14"></path><path d="M16 5v14"></path></svg>
+                        </div>
+                        <h3>Kanban inside Gmail</h3>
+                        <p>Move messages across clear workflow stages and keep follow-ups visible without copying tasks into another app.</p>
+                    </article>
+
+                    <article class="feature-card">
+                        <div class="feature-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.7L20 11l-6.1 2.3L12 19l-1.9-5.7L4 11l6.1-2.3L12 3z"></path><path d="M19 3v4"></path><path d="M21 5h-4"></path></svg>
+                        </div>
+                        <h3>AI extract actions</h3>
+                        <p>Pull decisions, todos, deadlines, and key context out of long threads before they eat the whole afternoon.</p>
+                    </article>
+
+                    <article class="feature-card">
+                        <div class="feature-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path><path d="M5 5h4"></path><path d="M5 19h4"></path></svg>
+                        </div>
+                        <h3>Fast inbox operations</h3>
+                        <p>Use Maili to act on groups of emails with intent, keeping cleanup fast while your Gmail labels remain intact.</p>
+                    </article>
+                </div>
+            </section>
+
+            <section class="section" id="workflow">
+                <div class="showcase">
+                    <div>
+                        <div class="section-head">
+                            <div class="section-label">Workflow</div>
+                            <h2>From unread message to finished task.</h2>
+                            <p>Maili is built for the real inbox loop: capture, understand, decide, and move on.</p>
+                        </div>
+                        <div class="workflow glass">
+                            <div class="workflow-list">
+                                <div class="workflow-item">
+                                    <div class="workflow-number">01</div>
+                                    <div>
+                                        <h3>Capture the email</h3>
+                                        <p>Mark an email as To-do, In progress, Waiting, or Done from the same Gmail row.</p>
+                                    </div>
+                                </div>
+                                <div class="workflow-item">
+                                    <div class="workflow-number">02</div>
+                                    <div>
+                                        <h3>Ask AI for the useful part</h3>
+                                        <p>Extract clean action items and summaries from messy threads, newsletters, or support replies.</p>
+                                    </div>
+                                </div>
+                                <div class="workflow-item">
+                                    <div class="workflow-number">03</div>
+                                    <div>
+                                        <h3>Review the board</h3>
+                                        <p>Use the Kanban view as a daily command center for the work hiding inside email.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="screenshot-stack">
+                        <div class="screenshot-card glass">
+                            <img src="./assets/s2.png" alt="Maili Kanban view showing Gmail tasks in board columns">
+                        </div>
+                        <div class="screenshot-card glass">
+                            <img src="./assets/s4.png" alt="Maili AI extraction panel for email actions">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="install-band" id="install">
+                <div>
+                    <div class="section-label">Install</div>
+                    <h2>Add Maili to Chrome and start organizing Gmail.</h2>
+                    <p>Install Maili from the Chrome Web Store, then open Gmail to bring Kanban boards and AI extraction into your inbox.</p>
+                </div>
+                <a class="btn btn-primary" id="contact-link" href="https://chromewebstore.google.com/detail/ldjhcbbeaploocbmldnbloainllgebel?utm_source=item-share-cb" target="_blank" rel="noopener noreferrer">Add to Chrome</a>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <a class="brand" href="#top" aria-label="Maili home">
+                <span class="brand-mark"><img src="./assets/maili-new-rm.png" alt=""></span>
+                <span>Maili</span>
+            </a>
+            <div class="footer-links">
+                <a href="#features">Features</a>
+                <a href="./privacy.html">Privacy</a>
+                <a href="./terms.html">Terms</a>
             </div>
-        </div>
-    </section>
-
-    <!-- Connect / Feedback Block -->
-    <section class="connect-section" id="connect">
-        <h3>We read every message.</h3>
-        <p>Found a bug? Have a brilliant feature idea? We are actively building this with our community. Reach out directly.</p>
-        <button id="connect-btn" class="btn-primary" style="padding: 1rem 2rem; font-size: 1rem;">Contact Developer</button>
-    </section>
-
-    <footer>
-        <ul class="footer-links">
-            <li><a href="#features">Features</a></li>
-            <li><a href="#pricing">Pricing</a></li>
-            <li><a href="./privacy.html">Privacy</a></li>
-            <li><a href="./terms.html">Terms</a></li>
-        </ul>
-        <div class="copyright">&copy; 2026 Maili Interface. All rights reserved.</div>
-    </footer>
+            <p>&copy; 2026 Maili. Built for faster Gmail work.</p>
+        </footer>
+    </div>
 
     <script>
-        // Header scroll behavior
-        const header = document.getElementById('header');
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 50) header.classList.add('scrolled');
-            else header.classList.remove('scrolled');
-        });
+        const nav = document.getElementById("nav");
 
-        // Smooth scroll
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth' });
-                }
-            });
-        });
+        const updateNav = () => {
+            nav.classList.toggle("is-scrolled", window.scrollY > 18);
+        };
 
-        // Anti-spam mailto generator for Connect button
-        // Base64 protects the email from simple plaintext scraping bots
-        document.getElementById('connect-btn').addEventListener('click', () => {
-            const email = atob('cmlqaW4uY2hhdHMuMUBnbWFpbC5jb20=');
-            window.location.href = `mailto:${email}?subject=Maili Feedback / Issue`;
-        });
+        updateNav();
+        window.addEventListener("scroll", updateNav, { passive: true });
     </script>
 </body>
 </html>
