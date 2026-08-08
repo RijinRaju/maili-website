@@ -1,842 +1,567 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Maili adds Kanban boards and AI email workflows directly inside Gmail.">
-    <link rel="icon" type="image/png" href="./assets/maili-new-rm.png">
-    <title>Maili - AI Kanban for Gmail</title>
-    <style>
-        :root {
-            color-scheme: dark;
-            --bg: #020503;
-            --bg-soft: #07100c;
-            --panel: rgba(255, 255, 255, 0.055);
-            --panel-strong: rgba(255, 255, 255, 0.09);
-            --line: rgba(213, 255, 232, 0.16);
-            --line-strong: rgba(133, 255, 190, 0.36);
-            --text: #f4fff8;
-            --muted: #a9b9b0;
-            --soft: #6f8278;
-            --green: #5cff9d;
-            --green-deep: #00a85c;
-            --blue: #81b7ff;
-            --red: #ff6d78;
-            --shadow: rgba(0, 0, 0, 0.55);
-            --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            min-height: 100vh;
-            overflow-x: hidden;
-            background:
-                radial-gradient(ellipse at 50% -22%, rgba(92, 255, 157, 0.28), transparent 38%),
-                radial-gradient(ellipse at 85% 22%, rgba(0, 168, 92, 0.16), transparent 34%),
-                radial-gradient(ellipse at 10% 36%, rgba(255, 109, 120, 0.08), transparent 26%),
-                linear-gradient(180deg, #020503 0%, #030706 42%, #050708 100%);
-            color: var(--text);
-            font-family: var(--font);
-            line-height: 1.55;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        body::before,
-        body::after {
-            content: "";
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            z-index: -1;
-        }
-
-        body::before {
-            opacity: 0.48;
-            background-image:
-                radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 1px, transparent 1.5px),
-                radial-gradient(circle, rgba(92, 255, 157, 0.9) 0 1px, transparent 1.5px),
-                radial-gradient(circle, rgba(255, 109, 120, 0.65) 0 1px, transparent 1.5px);
-            background-position: 12px 36px, 74px 118px, 190px 44px;
-            background-size: 220px 190px, 310px 260px, 420px 340px;
-        }
-
-        body::after {
-            background:
-                linear-gradient(rgba(92, 255, 157, 0.025) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(92, 255, 157, 0.025) 1px, transparent 1px);
-            background-size: 72px 72px;
-            mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent 78%);
-        }
-
-        a {
-            color: inherit;
-            text-decoration: none;
-        }
-
-        button,
-        a {
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .page-shell {
-            position: relative;
-            isolation: isolate;
-        }
-
-        .nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            z-index: 20;
-            border-bottom: 1px solid transparent;
-            transition: background 180ms ease, border-color 180ms ease;
-        }
-
-        .nav.is-scrolled {
-            border-color: rgba(213, 255, 232, 0.1);
-            background: rgba(2, 5, 3, 0.72);
-            backdrop-filter: blur(22px);
-            -webkit-backdrop-filter: blur(22px);
-        }
-
-        .nav-inner {
-            width: min(1180px, calc(100% - 36px));
-            height: 76px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 24px;
-        }
-
-        .brand {
-            display: inline-flex;
-            align-items: center;
-            gap: 11px;
-            min-width: max-content;
-            font-weight: 750;
-            letter-spacing: 0;
-        }
-
-        .brand-mark {
-            width: 38px;
-            height: 38px;
-            display: grid;
-            place-items: center;
-            border: 1px solid var(--line);
-            border-radius: 10px;
-            background: linear-gradient(145deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.035));
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 16px 34px rgba(0, 0, 0, 0.35);
-        }
-
-        .brand-mark img {
-            width: 25px;
-            height: 25px;
-            object-fit: contain;
-            filter: invert(1) brightness(2.2);
-        }
-
-        .brand span {
-            font-size: 1.05rem;
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 26px;
-            color: var(--muted);
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-
-        .nav-links a {
-            transition: color 160ms ease;
-        }
-
-        .nav-links a:hover {
-            color: var(--text);
-        }
-
-        .btn {
-            min-height: 44px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            border-radius: 999px;
-            border: 1px solid transparent;
-            padding: 0 20px;
-            font-size: 0.92rem;
-            font-weight: 750;
-            line-height: 1;
-            white-space: nowrap;
-            transition: transform 170ms ease, border-color 170ms ease, background 170ms ease, box-shadow 170ms ease;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-        }
-
-        .btn-primary {
-            color: #031108;
-            background: linear-gradient(135deg, #f4fff8 0%, var(--green) 58%, #0ee684 100%);
-            box-shadow: 0 18px 50px rgba(92, 255, 157, 0.22);
-        }
-
-        .btn-primary:hover {
-            box-shadow: 0 24px 70px rgba(92, 255, 157, 0.3);
-        }
-
-        .btn-secondary {
-            color: var(--text);
-            border-color: var(--line);
-            background: rgba(255, 255, 255, 0.045);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-        }
-
-        .btn-secondary:hover {
-            border-color: var(--line-strong);
-            background: rgba(255, 255, 255, 0.075);
-        }
-
-        .hero {
-            width: min(1240px, calc(100% - 36px));
-            min-height: 100vh;
-            margin: 0 auto;
-            padding: 122px 0 62px;
-            display: grid;
-            align-content: center;
-            gap: 42px;
-        }
-
-        .hero-copy {
-            max-width: 930px;
-            margin: 0 auto;
-            text-align: center;
-        }
-
-        .eyebrow {
-            width: fit-content;
-            margin: 0 auto 22px;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            border: 1px solid var(--line);
-            border-radius: 999px;
-            padding: 8px 13px;
-            background: rgba(255, 255, 255, 0.05);
-            color: #d8ffe7;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
-            font-size: 0.82rem;
-            font-weight: 750;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--green);
-            box-shadow: 0 0 18px var(--green);
-        }
-
-        h1 {
-            max-width: 930px;
-            margin: 0 auto;
-            font-size: clamp(2.7rem, 5.7vw, 5.45rem);
-            font-weight: 850;
-            line-height: 0.98;
-            letter-spacing: 0;
-        }
-
-        .hero-gradient {
-            display: block;
-            color: transparent;
-            background: linear-gradient(95deg, #fff 0%, #d7ffe7 32%, #5cff9d 66%, #92ffcb 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            text-shadow: 0 0 60px rgba(92, 255, 157, 0.16);
-        }
-
-        .hero-copy p {
-            max-width: 720px;
-            margin: 22px auto 0;
-            color: var(--muted);
-            font-size: clamp(0.98rem, 1.35vw, 1.12rem);
-        }
-
-        .hero-actions {
-            margin-top: 30px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 14px;
-        }
-
-        .trust-row {
-            margin-top: 23px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px;
-            color: var(--soft);
-            font-size: 0.88rem;
-            font-weight: 650;
-        }
-
-        .trust-row span {
-            border: 1px solid rgba(213, 255, 232, 0.1);
-            border-radius: 999px;
-            padding: 7px 12px;
-            background: rgba(0, 0, 0, 0.18);
-        }
-
-        .hero-product {
-            position: relative;
-            margin: 0 auto;
-            width: min(1160px, 100%);
-        }
-
-        .hero-product::before {
-            content: "";
-            position: absolute;
-            inset: -1px;
-            border-radius: 26px;
-            padding: 1px;
-            background: linear-gradient(120deg, transparent 0%, rgba(92, 255, 157, 0.8) 32%, rgba(255, 255, 255, 0.42) 50%, transparent 72%);
-            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            pointer-events: none;
-        }
-
-        .glass {
-            border: 1px solid var(--line);
-            border-radius: 26px;
-            background:
-                linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.035)),
-                rgba(0, 0, 0, 0.28);
-            box-shadow: 0 36px 120px var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.16);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-        }
-
-        .browser-frame {
-            overflow: hidden;
-            padding: 12px;
-        }
-
-        .browser-bar {
-            height: 38px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 14px;
-            padding: 0 8px 10px;
-        }
-
-        .lights {
-            display: flex;
-            gap: 8px;
-        }
-
-        .lights i {
-            width: 10px;
-            height: 10px;
-            display: block;
-            border-radius: 50%;
-            background: var(--red);
-        }
-
-        .lights i:nth-child(2) {
-            background: #ffcb5c;
-        }
-
-        .lights i:nth-child(3) {
-            background: var(--green);
-        }
-
-        .bar-pill {
-            flex: 1;
-            max-width: 520px;
-            height: 26px;
-            border: 1px solid rgba(213, 255, 232, 0.1);
-            border-radius: 999px;
-            background: rgba(0, 0, 0, 0.22);
-            color: var(--soft);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.78rem;
-            font-weight: 650;
-        }
-
-        .browser-frame img {
-            width: 100%;
-            display: block;
-            border-radius: 16px;
-            border: 1px solid rgba(0, 0, 0, 0.3);
-        }
-
-        .section {
-            width: min(1180px, calc(100% - 36px));
-            margin: 0 auto;
-            padding: 92px 0;
-        }
-
-        .section-head {
-            max-width: 720px;
-            margin-bottom: 38px;
-        }
-
-        .section-label {
-            margin-bottom: 12px;
-            color: var(--green);
-            font-size: 0.78rem;
-            font-weight: 850;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-        }
-
-        h2 {
-            font-size: clamp(2rem, 3.8vw, 3.8rem);
-            font-weight: 830;
-            line-height: 1;
-            letter-spacing: 0;
-        }
-
-        .section-head p {
-            margin-top: 18px;
-            color: var(--muted);
-            font-size: 1.04rem;
-            max-width: 610px;
-        }
-
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-        }
-
-        .feature-card {
-            min-height: 250px;
-            padding: 24px;
-            border-radius: 18px;
-            border: 1px solid var(--line);
-            background:
-                linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
-                rgba(0, 0, 0, 0.22);
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
-        }
-
-        .feature-icon {
-            width: 46px;
-            height: 46px;
-            margin-bottom: 23px;
-            display: grid;
-            place-items: center;
-            border: 1px solid rgba(92, 255, 157, 0.26);
-            border-radius: 13px;
-            background: rgba(92, 255, 157, 0.08);
-            color: var(--green);
-        }
-
-        .feature-icon svg {
-            width: 22px;
-            height: 22px;
-            stroke: currentColor;
-            stroke-width: 2;
-            fill: none;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        .feature-card h3 {
-            margin-bottom: 12px;
-            font-size: 1.16rem;
-            letter-spacing: 0;
-        }
-
-        .feature-card p {
-            color: var(--muted);
-            font-size: 0.96rem;
-        }
-
-        .showcase {
-            display: grid;
-            grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-            gap: 26px;
-            align-items: center;
-        }
-
-        .workflow {
-            padding: 28px;
-        }
-
-        .workflow-list {
-            display: grid;
-            gap: 14px;
-        }
-
-        .workflow-item {
-            display: grid;
-            grid-template-columns: 42px 1fr;
-            gap: 16px;
-            padding: 16px;
-            border: 1px solid rgba(213, 255, 232, 0.12);
-            border-radius: 14px;
-            background: rgba(0, 0, 0, 0.22);
-        }
-
-        .workflow-number {
-            width: 42px;
-            height: 42px;
-            border-radius: 12px;
-            display: grid;
-            place-items: center;
-            background: rgba(92, 255, 157, 0.1);
-            color: var(--green);
-            font-weight: 850;
-        }
-
-        .workflow-item h3 {
-            margin-bottom: 4px;
-            font-size: 1rem;
-        }
-
-        .workflow-item p {
-            color: var(--muted);
-            font-size: 0.92rem;
-        }
-
-        .screenshot-stack {
-            display: grid;
-            gap: 16px;
-        }
-
-        .screenshot-card {
-            overflow: hidden;
-            padding: 10px;
-            border-radius: 20px;
-        }
-
-        .screenshot-card img {
-            width: 100%;
-            display: block;
-            border-radius: 12px;
-        }
-
-        .screenshot-card:nth-child(2) {
-            width: 82%;
-            justify-self: end;
-        }
-
-        .install-band {
-            width: min(1180px, calc(100% - 36px));
-            margin: 28px auto 0;
-            padding: 38px;
-            display: grid;
-            grid-template-columns: 1fr auto;
-            align-items: center;
-            gap: 28px;
-            border-radius: 24px;
-            border: 1px solid rgba(92, 255, 157, 0.25);
-            background:
-                linear-gradient(135deg, rgba(92, 255, 157, 0.16), rgba(255, 255, 255, 0.045) 42%, rgba(0, 0, 0, 0.18)),
-                rgba(3, 12, 8, 0.8);
-            box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.16);
-        }
-
-        .install-band h2 {
-            max-width: 760px;
-            font-size: clamp(1.85rem, 3.3vw, 3.1rem);
-        }
-
-        .install-band p {
-            max-width: 620px;
-            margin-top: 12px;
-            color: #c8d9cf;
-        }
-
-        .footer {
-            width: min(1180px, calc(100% - 36px));
-            margin: 0 auto;
-            padding: 56px 0 42px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 24px;
-            color: var(--soft);
-            border-top: 1px solid rgba(213, 255, 232, 0.11);
-        }
-
-        .footer-links {
-            display: flex;
-            gap: 20px;
-            font-size: 0.9rem;
-            font-weight: 650;
-        }
-
-        .footer a:hover {
-            color: var(--text);
-        }
-
-        @media (max-width: 900px) {
-            .nav-links {
-                display: none;
-            }
-
-            .hero {
-                padding-top: 108px;
-            }
-
-            .feature-grid,
-            .showcase,
-            .install-band {
-                grid-template-columns: 1fr;
-            }
-
-            .screenshot-card:nth-child(2) {
-                width: 100%;
-            }
-
-            .install-band {
-                padding: 28px;
-            }
-        }
-
-        @media (max-width: 620px) {
-            .nav-inner,
-            .hero,
-            .section,
-            .install-band,
-            .footer {
-                width: min(100% - 24px, 1180px);
-            }
-
-            .nav-inner {
-                height: 68px;
-            }
-
-            .nav .btn {
-                display: none;
-            }
-
-            h1 {
-                font-size: clamp(2.35rem, 13vw, 3.35rem);
-            }
-
-            .hero-copy p {
-                font-size: 0.96rem;
-            }
-
-            .hero-actions {
-                align-items: stretch;
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
-            }
-
-            .browser-frame {
-                padding: 8px;
-                border-radius: 18px;
-            }
-
-            .browser-bar {
-                display: none;
-            }
-
-            .browser-frame img {
-                border-radius: 12px;
-            }
-
-            .section {
-                padding: 66px 0;
-            }
-
-            .feature-card {
-                min-height: 0;
-            }
-
-            .footer {
-                align-items: flex-start;
-                flex-direction: column;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Maili turns Gmail into a Kanban board with AI action extraction — built inside your inbox, not another tab.">
+<link rel="icon" type="image/png" href="./assets/maili-new-rm.png">
+<title>Maili — Gmail, organized.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAFAF7;
+    --panel:#F2F1EA;
+    --panel-2:#EBE9DF;
+    --ink:#121210;
+    --ink-soft:#6E6D63;
+    --ink-faint:#9B9A8F;
+    --line: rgba(18,18,16,0.11);
+    --line-strong: rgba(18,18,16,0.24);
+    --accent:#3247D6;
+    --accent-ink:#212F9E;
+    --accent-soft:#E7E9FA;
+    --font-display:"Inter", ui-sans-serif, system-ui, sans-serif;
+    --font-serif:"Instrument Serif", ui-serif, Georgia, serif;
+    --font-body:"Inter", ui-sans-serif, system-ui, sans-serif;
+    --font-mono:"IBM Plex Mono", ui-monospace, monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-body);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  a{color:inherit;text-decoration:none;}
+  ::selection{background:var(--accent);color:#fff;}
+
+  .wrap{width:min(1140px, calc(100% - 40px));margin:0 auto;position:relative;z-index:2;}
+
+  /* ---------- NAV ---------- */
+  .nav{position:fixed;top:0;left:0;width:100%;z-index:50;border-bottom:1px solid transparent;transition:background .25s ease, border-color .25s ease;}
+  .nav.scrolled{background:rgba(250,250,247,0.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-color:var(--line);}
+  .nav-inner{width:min(1140px, calc(100% - 40px));margin:0 auto;height:72px;display:flex;align-items:center;justify-content:space-between;gap:20px;}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:1.08rem;letter-spacing:-0.01em;}
+  .brand img{width:60px;height:60px;object-fit:contain;}
+  .nav-links{display:flex;align-items:center;gap:30px;font-size:0.89rem;font-weight:500;color:var(--ink-soft);}
+  .nav-links a{transition:color .15s ease;}
+  .nav-links a:hover{color:var(--ink);}
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    min-height:44px;padding:0 22px;border-radius:8px;
+    font-weight:600;font-size:0.89rem;white-space:nowrap;
+    border:1px solid transparent;cursor:pointer;
+    transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s ease;
+  }
+  .btn-primary{color:#fff;background:var(--ink);}
+  .btn-primary:hover{background:var(--accent);transform:translateY(-1px);box-shadow:0 8px 22px rgba(50,71,214,0.25);}
+  .btn-secondary{background:transparent;color:var(--ink);border-color:var(--line-strong);}
+  .btn-secondary:hover{border-color:var(--ink);background:rgba(18,18,16,0.03);}
+  .nav .btn{min-height:40px;padding:0 18px;font-size:0.84rem;}
+
+  /* ---------- HERO ---------- */
+  .hero{position:relative;padding:158px 0 30px;overflow:hidden;}
+  .dotfield{
+    position:absolute;top:60px;left:50%;transform:translateX(-52%) rotate(-6deg);
+    width:640px;height:340px;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--ink) 1.1px, transparent 1.1px);
+    background-size:15px 15px;
+    -webkit-mask-image:radial-gradient(ellipse 320px 170px at 30% 50%, black 0%, transparent 72%);
+    mask-image:radial-gradient(ellipse 320px 170px at 30% 50%, black 0%, transparent 72%);
+    opacity:0.1;
+  }
+  .hero-inner{position:relative;z-index:2;text-align:center;}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:9px;
+    font-family:var(--font-mono);font-size:0.76rem;font-weight:500;color:var(--ink-soft);
+    border:1px solid var(--line-strong);border-radius:999px;padding:7px 14px 7px 10px;
+    background:var(--panel);
+  }
+  .eyebrow .pulse{width:6px;height:6px;border-radius:50%;background:var(--accent);}
+
+  h1{
+    font-weight:700;
+    font-size:clamp(2.6rem, 6vw, 5rem);
+    line-height:1.03;letter-spacing:-0.03em;
+    margin:26px auto 0;max-width:16ch;
+  }
+  h1 em{font-family:var(--font-serif);font-style:italic;font-weight:400;color:var(--accent);}
+  .hero p.lede{max-width:44ch;margin:24px auto 0;font-size:clamp(1rem,1.3vw,1.13rem);color:var(--ink-soft);}
+  .hero-actions{margin-top:32px;display:flex;flex-wrap:wrap;justify-content:center;gap:12px;}
+  .trust-row{margin-top:26px;display:flex;flex-wrap:wrap;justify-content:center;gap:22px;font-family:var(--font-mono);font-size:0.77rem;color:var(--ink-faint);}
+  .trust-row span{display:inline-flex;align-items:center;gap:7px;}
+  .trust-row svg{width:12px;height:12px;stroke:var(--accent);}
+
+  /* ---------- PRODUCT SHOT ---------- */
+  .hero-shot{position:relative;z-index:2;margin:60px auto 0;max-width:1040px;}
+  .frame{border-radius:16px;border:1px solid var(--line-strong);background:var(--paper);overflow:hidden;box-shadow:0 30px 70px rgba(18,18,16,0.08);}
+  .frame-bar{display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid var(--line);}
+  .frame-bar .lights{display:flex;gap:6px;}
+  .frame-bar i{width:9px;height:9px;border-radius:50%;background:var(--line-strong);display:block;}
+  .frame-bar .url{flex:1;max-width:400px;height:27px;border-radius:999px;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:0.73rem;color:var(--ink-soft);margin:0 auto;}
+  .board{padding:22px;display:grid;grid-template-columns:170px 1fr;gap:0;}
+  .b-side{padding:8px 14px 8px 0;border-right:1px solid var(--line);}
+  .b-item{font-size:0.82rem;color:var(--ink-soft);padding:9px 12px;border-radius:7px;margin-bottom:3px;}
+  .b-item.active{background:var(--panel);color:var(--ink);font-weight:600;}
+  .b-cols{padding:0 0 0 22px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .b-col h4{font-family:var(--font-mono);font-size:0.66rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink-faint);margin-bottom:12px;}
+  .b-card{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:11px 12px;font-size:0.82rem;margin-bottom:10px;color:var(--ink);}
+  .b-card .tag{display:inline-block;margin-top:7px;font-family:var(--font-mono);font-size:0.6rem;padding:3px 7px;border-radius:5px;}
+  .tag.ai{background:var(--accent-soft);color:var(--accent);}
+  .tag.due{background:var(--panel-2);color:var(--ink-soft);}
+
+  /* ---------- STRIP ---------- */
+  .strip{border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:76px;}
+  .strip-inner{width:min(1140px, calc(100% - 40px));margin:0 auto;padding:28px 0;display:flex;flex-wrap:wrap;gap:20px;justify-content:space-between;}
+  .strip-item{font-family:var(--font-mono);font-size:0.83rem;color:var(--ink-soft);}
+  .strip-item b{color:var(--ink);font-weight:700;}
+
+  /* ---------- SECTION ---------- */
+  .section{padding:96px 0;}
+  .section-head{max-width:600px;margin-bottom:42px;}
+  .label{
+    display:inline-flex;align-items:center;gap:8px;
+    font-family:var(--font-mono);font-size:0.75rem;font-weight:500;color:var(--accent);
+    letter-spacing:0.06em;text-transform:uppercase;margin-bottom:15px;
+  }
+  .label::before{content:"";width:14px;height:1px;background:var(--accent);}
+  h2{font-weight:700;font-size:clamp(1.85rem,3.2vw,2.7rem);line-height:1.1;letter-spacing:-0.02em;}
+  h2 em{font-family:var(--font-serif);font-style:italic;font-weight:400;color:var(--accent);}
+  .section-head p{margin-top:15px;color:var(--ink-soft);font-size:1.01rem;max-width:52ch;}
+
+  /* ---------- FEATURES ---------- */
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  .card{
+    position:relative;border-radius:14px;border:1px solid var(--line);background:var(--paper);
+    padding:26px;transition:border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+  }
+  .card:hover{border-color:var(--line-strong);box-shadow:0 14px 30px rgba(18,18,16,0.06);transform:translateY(-2px);}
+  .card .icon{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;margin-bottom:18px;background:var(--panel);border:1px solid var(--line);}
+  .card .icon svg{width:18px;height:18px;stroke:var(--ink);stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+  .card h3{font-size:1.08rem;font-weight:700;margin-bottom:9px;letter-spacing:-0.01em;}
+  .card p{color:var(--ink-soft);font-size:0.9rem;}
+  .card.soon{border-style:dashed;opacity:0.85;}
+  .soon-tag{position:absolute;top:20px;right:20px;font-family:var(--font-mono);font-size:0.6rem;font-weight:600;letter-spacing:0.05em;color:var(--accent);border:1px solid var(--accent-soft);background:var(--accent-soft);border-radius:999px;padding:4px 9px;text-transform:uppercase;}
+
+  /* ---------- WORKFLOW ---------- */
+  .workflow{display:flex;gap:0;}
+  .wf-step{flex:1;position:relative;padding-right:24px;}
+  .wf-step:not(:last-child)::after{content:"";position:absolute;top:21px;right:0;width:24px;height:1px;background:var(--line-strong);}
+  .wf-num{font-family:var(--font-mono);font-size:0.78rem;color:var(--accent);border:1px solid var(--line-strong);border-radius:50%;width:42px;height:42px;display:grid;place-items:center;margin-bottom:20px;background:var(--panel);}
+  .wf-step h3{font-size:1.1rem;font-weight:700;margin-bottom:9px;}
+  .wf-step p{color:var(--ink-soft);font-size:0.89rem;max-width:28ch;}
+
+  /* ---------- AI SPOTLIGHT ---------- */
+  .spotlight{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;}
+  .spot-list{margin-top:22px;display:grid;gap:13px;}
+  .spot-list li{display:flex;gap:11px;align-items:flex-start;font-size:0.93rem;color:var(--ink-soft);list-style:none;}
+  .spot-list svg{width:15px;height:15px;stroke:var(--accent);flex-shrink:0;margin-top:3px;}
+  .thread-mock{border-radius:14px;border:1px solid var(--line);background:var(--paper);padding:24px;}
+  .thread-mock .subj{font-weight:700;font-size:0.96rem;margin-bottom:8px;}
+  .thread-mock .snippet{color:var(--ink-soft);font-size:0.86rem;padding-bottom:18px;border-bottom:1px solid var(--line);}
+  .extract-box{margin-top:18px;background:var(--accent-soft);border-radius:11px;padding:16px 18px;}
+  .extract-box .ex-label{font-family:var(--font-mono);font-size:0.66rem;color:var(--accent-ink);font-weight:600;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:10px;}
+  .extract-box .ex-item{display:flex;gap:8px;font-size:0.86rem;color:var(--ink);padding:5px 0;align-items:baseline;}
+  .extract-box .ex-item .due{margin-left:auto;font-family:var(--font-mono);font-size:0.71rem;color:var(--accent-ink);white-space:nowrap;}
+
+  /* ---------- ROADMAP ---------- */
+  .public-box{border-radius:16px;border:1px solid var(--line);background:var(--panel);padding:40px;display:grid;grid-template-columns:1fr 1fr;gap:44px;}
+  .public-box h3{font-size:1.3rem;font-weight:700;margin-bottom:12px;}
+  .public-box p{color:var(--ink-soft);font-size:0.94rem;}
+  .rm-head{font-family:var(--font-mono);font-size:0.71rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-faint);margin-bottom:13px;}
+  .rm-item{display:flex;gap:10px;font-size:0.9rem;padding:9px 0;border-bottom:1px solid var(--line);align-items:baseline;color:var(--ink);}
+  .rm-item:last-child{border-bottom:none;}
+  .rm-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;}
+  .rm-dot.done{background:var(--ink);}
+  .rm-dot.next{background:var(--accent);}
+
+  /* ---------- SUPPORT ---------- */
+  .support-wrap{display:grid;grid-template-columns:0.8fr 1.2fr;gap:18px;align-items:stretch;}
+  .support-note{border-radius:14px;border:1px solid var(--line);background:var(--panel);padding:28px;display:flex;flex-direction:column;justify-content:space-between;gap:22px;}
+  .support-note h3{font-size:1.14rem;font-weight:700;margin-bottom:10px;}
+  .support-note p{color:var(--ink-soft);font-size:0.91rem;}
+  .support-chip{display:flex;justify-content:space-between;gap:12px;border:1px solid var(--line);border-radius:9px;padding:12px 14px;background:var(--paper);font-size:0.83rem;color:var(--ink-soft);font-family:var(--font-mono);}
+  .support-chip strong{color:var(--ink);}
+  .issue-form{border-radius:14px;border:1px solid var(--line);background:var(--paper);padding:28px;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .field{display:grid;gap:7px;}
+  .field-full{grid-column:1/-1;}
+  .field label{font-family:var(--font-mono);font-size:0.71rem;font-weight:500;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.04em;}
+  .field input,.field select,.field textarea{
+    width:100%;border:1px solid var(--line-strong);border-radius:9px;background:var(--panel);
+    color:var(--ink);font:inherit;padding:0 14px;min-height:44px;outline:none;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .field textarea{min-height:118px;padding:12px 14px;resize:vertical;}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);background:var(--paper);}
+  .form-actions{margin-top:18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+  .form-status{color:var(--ink-soft);font-size:0.85rem;}
+  .form-status.ok{color:var(--accent-ink);font-weight:600;}
+  .form-status.err{color:#B3261E;font-weight:600;}
+
+  /* ---------- INSTALL ---------- */
+  .install-band{
+    position:relative;border-radius:18px;border:1px solid var(--line-strong);padding:50px;overflow:hidden;
+    background:var(--ink);color:var(--paper);
+    display:grid;grid-template-columns:1fr auto;align-items:center;gap:28px;
+  }
+  .install-band h2{max-width:460px;color:var(--paper);}
+  .install-band p{margin-top:12px;color:rgba(250,250,247,0.65);max-width:400px;}
+  .install-band .btn-primary{background:var(--paper);color:var(--ink);}
+  .install-band .btn-primary:hover{background:var(--accent);color:#fff;}
+
+  /* ---------- FOOTER ---------- */
+  .footer{border-top:1px solid var(--line);padding:42px 0 38px;display:flex;flex-wrap:wrap;gap:20px;align-items:center;justify-content:space-between;color:var(--ink-faint);}
+  .footer-links{display:flex;gap:20px;font-size:0.86rem;font-weight:500;color:var(--ink-soft);}
+  .footer-links a:hover{color:var(--ink);}
+  .footer small{font-family:var(--font-mono);font-size:0.75rem;}
+
+  .reveal{opacity:0;transform:translateY(16px);transition:opacity .55s ease, transform .55s ease;}
+  .reveal.in{opacity:1;transform:none;}
+  @media (prefers-reduced-motion: reduce){.reveal{opacity:1;transform:none;}}
+
+  @media (max-width:960px){
+    .nav-links{display:none;}
+    .grid3{grid-template-columns:1fr 1fr;}
+    .workflow{flex-direction:column;gap:32px;}
+    .wf-step:not(:last-child)::after{display:none;}
+    .spotlight{grid-template-columns:1fr;}
+    .public-box{grid-template-columns:1fr;padding:28px;}
+    .support-wrap{grid-template-columns:1fr;}
+    .install-band{grid-template-columns:1fr;text-align:left;}
+    .board{grid-template-columns:1fr;}
+    .b-side{display:none;}
+  }
+  @media (max-width:620px){
+    .form-grid{grid-template-columns:1fr;}
+    .grid3{grid-template-columns:1fr;}
+    .install-band{padding:30px;}
+  }
+</style>
 </head>
 <body>
-    <div class="page-shell">
-        <header class="nav" id="nav">
-            <div class="nav-inner">
-                <a class="brand" href="#top" aria-label="Maili home">
-                    <span class="brand-mark"><img src="./assets/maili-new-rm.png" alt=""></span>
-                    <span>Maili</span>
-                </a>
-                <nav class="nav-links" aria-label="Primary navigation">
-                    <a href="#features">Features</a>
-                    <a href="#workflow">Workflow</a>
-                    <a href="#install">Install</a>
-                </nav>
-                <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/ldjhcbbeaploocbmldnbloainllgebel?utm_source=item-share-cb" target="_blank" rel="noopener noreferrer">Add to Chrome</a>
-            </div>
-        </header>
 
-        <main id="top">
-            <section class="hero" aria-labelledby="hero-title">
-                <div class="hero-copy">
-                    <div class="eyebrow"><span class="status-dot"></span> Gmail extension for focused inbox work</div>
-                    <h1 id="hero-title">Turn Gmail into an <span class="hero-gradient">AI Kanban command center.</span></h1>
-                    <p>Maili adds a visual task board, AI-powered extraction, and fast inbox actions directly inside Gmail, so emails become organized work instead of another tab to manage.</p>
-                    <div class="hero-actions">
-                        <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/ldjhcbbeaploocbmldnbloainllgebel?utm_source=item-share-cb" target="_blank" rel="noopener noreferrer">Add to Chrome</a>
-                        <a class="btn btn-secondary" href="#features">See What It Does</a>
-                    </div>
-                    <div class="trust-row" aria-label="Maili highlights">
-                        <span>Inside Gmail</span>
-                        <span>Kanban board</span>
-                        <span>AI extraction</span>
-                        <span>Chrome Web Store</span>
-                    </div>
-                </div>
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#top">
+      <img src="./assets/maili-new-rm.png" alt="Maili">
+    </a>
+    <nav class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#workflow">Workflow</a>
+      <a href="#ai">AI extraction</a>
+      <a href="#support">Support</a>
+    </nav>
+    <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/ldjhcbbeaploocbmldnbloainllgebel?utm_source=item-share-cb" target="_blank" rel="noopener noreferrer">Add to Chrome</a>
+  </div>
+</header>
 
-                <div class="hero-product">
-                    <div class="browser-frame glass">
-                        <div class="browser-bar">
-                            <div class="lights" aria-hidden="true"><i></i><i></i><i></i></div>
-                            <div class="bar-pill">maili.in / Gmail workspace preview</div>
-                            <div class="lights" aria-hidden="true"><i></i><i></i><i></i></div>
-                        </div>
-                        <img src="./assets/s1.png" alt="Maili inside Gmail with inbox task labels and a Kanban control bar">
-                    </div>
-                </div>
-            </section>
-
-            <section class="section" id="features">
-                <div class="section-head">
-                    <div class="section-label">Features</div>
-                    <h2>Everything important stays where the email already is.</h2>
-                    <p>Maili layers productivity tools over Gmail without replacing your inbox or forcing a new workflow.</p>
-                </div>
-
-                <div class="feature-grid">
-                    <article class="feature-card">
-                        <div class="feature-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24"><path d="M4 5h16"></path><path d="M4 12h16"></path><path d="M4 19h16"></path><path d="M8 5v14"></path><path d="M16 5v14"></path></svg>
-                        </div>
-                        <h3>Kanban inside Gmail</h3>
-                        <p>Move messages across clear workflow stages and keep follow-ups visible without copying tasks into another app.</p>
-                    </article>
-
-                    <article class="feature-card">
-                        <div class="feature-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.7L20 11l-6.1 2.3L12 19l-1.9-5.7L4 11l6.1-2.3L12 3z"></path><path d="M19 3v4"></path><path d="M21 5h-4"></path></svg>
-                        </div>
-                        <h3>AI extract actions</h3>
-                        <p>Pull decisions, todos, deadlines, and key context out of long threads before they eat the whole afternoon.</p>
-                    </article>
-
-                    <article class="feature-card">
-                        <div class="feature-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path><path d="M5 5h4"></path><path d="M5 19h4"></path></svg>
-                        </div>
-                        <h3>Fast inbox operations</h3>
-                        <p>Use Maili to act on groups of emails with intent, keeping cleanup fast while your Gmail labels remain intact.</p>
-                    </article>
-                </div>
-            </section>
-
-            <section class="section" id="workflow">
-                <div class="showcase">
-                    <div>
-                        <div class="section-head">
-                            <div class="section-label">Workflow</div>
-                            <h2>From unread message to finished task.</h2>
-                            <p>Maili is built for the real inbox loop: capture, understand, decide, and move on.</p>
-                        </div>
-                        <div class="workflow glass">
-                            <div class="workflow-list">
-                                <div class="workflow-item">
-                                    <div class="workflow-number">01</div>
-                                    <div>
-                                        <h3>Capture the email</h3>
-                                        <p>Mark an email as To-do, In progress, Waiting, or Done from the same Gmail row.</p>
-                                    </div>
-                                </div>
-                                <div class="workflow-item">
-                                    <div class="workflow-number">02</div>
-                                    <div>
-                                        <h3>Ask AI for the useful part</h3>
-                                        <p>Extract clean action items and summaries from messy threads, newsletters, or support replies.</p>
-                                    </div>
-                                </div>
-                                <div class="workflow-item">
-                                    <div class="workflow-number">03</div>
-                                    <div>
-                                        <h3>Review the board</h3>
-                                        <p>Use the Kanban view as a daily command center for the work hiding inside email.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="screenshot-stack">
-                        <div class="screenshot-card glass">
-                            <img src="./assets/s2.png" alt="Maili Kanban view showing Gmail tasks in board columns">
-                        </div>
-                        <div class="screenshot-card glass">
-                            <img src="./assets/s4.png" alt="Maili AI extraction panel for email actions">
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section class="install-band" id="install">
-                <div>
-                    <div class="section-label">Install</div>
-                    <h2>Add Maili to Chrome and start organizing Gmail.</h2>
-                    <p>Install Maili from the Chrome Web Store, then open Gmail to bring Kanban boards and AI extraction into your inbox.</p>
-                </div>
-                <a class="btn btn-primary" id="contact-link" href="https://chromewebstore.google.com/detail/ldjhcbbeaploocbmldnbloainllgebel?utm_source=item-share-cb" target="_blank" rel="noopener noreferrer">Add to Chrome</a>
-            </section>
-        </main>
-
-        <footer class="footer">
-            <a class="brand" href="#top" aria-label="Maili home">
-                <span class="brand-mark"><img src="./assets/maili-new-rm.png" alt=""></span>
-                <span>Maili</span>
-            </a>
-            <div class="footer-links">
-                <a href="#features">Features</a>
-                <a href="./privacy.html">Privacy</a>
-                <a href="./terms.html">Terms</a>
-            </div>
-            <p>&copy; 2026 Maili. Built for faster Gmail work.</p>
-        </footer>
+<main id="top">
+  <section class="hero">
+    <div class="dotfield"></div>
+    <div class="wrap hero-inner">
+      <h1>Gmail, <em>finally organized.</em></h1>
+      <p class="lede">Maili turns your inbox into a Kanban board and pulls action items out of long threads with AI — without ever leaving Gmail.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/ldjhcbbeaploocbmldnbloainllgebel?utm_source=item-share-cb" target="_blank" rel="noopener noreferrer">Add to Chrome — it's free</a>
+        <a class="btn btn-secondary" href="#workflow">See how it works</a>
+      </div>
+      <div class="trust-row">
+        <span><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Works inside Gmail</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Free plan available</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Built by one developer</span>
+      </div>
     </div>
 
-    <script>
-        const nav = document.getElementById("nav");
+    <div class="hero-shot wrap reveal">
+      <div class="frame">
+        <div class="frame-bar">
+          <div class="lights"><i></i><i></i><i></i></div>
+          <div class="url">mail.google.com</div>
+          <div style="width:54px"></div>
+        </div>
+        <!-- Swap this block for <img src="./assets/s1.png" alt="Maili Kanban board inside Gmail"> once you export a real screenshot -->
+        <div class="board">
+          <div class="b-side">
+            <div class="b-item active">Inbox board</div>
+            <div class="b-item">Client work</div>
+            <div class="b-item">Invoices</div>
+            <div class="b-item">Newsletters</div>
+          </div>
+          <div class="b-cols">
+            <div class="b-col">
+              <h4>To‑do</h4>
+              <div class="b-card">Contract review — Priya<span class="tag due">due fri</span></div>
+              <div class="b-card">Re: onboarding docs</div>
+            </div>
+            <div class="b-col">
+              <h4>In progress</h4>
+              <div class="b-card">Q3 report feedback<span class="tag ai">ai extracted</span></div>
+            </div>
+            <div class="b-col">
+              <h4>Done</h4>
+              <div class="b-card">Vendor invoice #114</div>
+              <div class="b-card">Intro call notes</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-        const updateNav = () => {
-            nav.classList.toggle("is-scrolled", window.scrollY > 18);
-        };
+  <div class="strip">
+    <div class="strip-inner">
+      <div class="strip-item"><b>0</b> extra tabs to manage your tasks</div>
+      <div class="strip-item"><b>3</b> board stages, built into Gmail</div>
+      <div class="strip-item"><b>1</b> click to extract actions from a thread</div>
+      <div class="strip-item"><b>$0</b> to start on the free plan</div>
+    </div>
+  </div>
 
-        updateNav();
-        window.addEventListener("scroll", updateNav, { passive: true });
-    </script>
+  <section class="section wrap reveal" id="features">
+    <div class="section-head">
+      <div class="label">Features</div>
+      <h2>Everything stays where the email already lives.</h2>
+      <p>No new app to check, no tasks to copy over by hand. The board and your inbox are always in sync.</p>
+    </div>
+
+    <div class="grid3">
+      <div class="card">
+        <div class="icon"><svg viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16M8 5v14M16 5v14"/></svg></div>
+        <h3>Kanban inside Gmail</h3>
+        <p>Move any email across To‑do, In Progress or Done from the same inbox row. No tab switching, no separate task manager.</p>
+      </div>
+      <div class="card">
+        <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.7L20 11l-6.1 2.3L12 19l-1.9-5.7L4 11l6.1-2.3L12 3z"/></svg></div>
+        <h3>AI action extraction</h3>
+        <p>Pull decisions, deadlines and next steps out of long threads in one click.</p>
+      </div>
+      <div class="card">
+        <div class="icon"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div>
+        <h3>Board notifications</h3>
+        <p>A quiet nudge when a card sits untouched, so nothing slips through a busy inbox.</p>
+      </div>
+      <div class="card soon">
+        <span class="soon-tag">Next</span>
+        <div class="icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+        <h3>AI reply drafts</h3>
+        <p>Written in the tone of your own sent folder, not a generic AI voice.</p>
+      </div>
+      <div class="card soon">
+        <span class="soon-tag">Next</span>
+        <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg></div>
+        <h3>Follow‑up nudges</h3>
+        <p>"No reply in 4 days — draft a follow‑up?" Maili watches the thread.</p>
+      </div>
+      <div class="card soon">
+        <span class="soon-tag">Roadmap</span>
+        <div class="icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+        <h3>Shared team boards</h3>
+        <p>One board across a shared inbox, like support@.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section wrap reveal" id="workflow">
+    <div class="section-head">
+      <div class="label">How it works</div>
+      <h2>From unread message to <em>finished task</em>, in three steps.</h2>
+    </div>
+    <div class="workflow">
+      <div class="wf-step">
+        <div class="wf-num">01</div>
+        <h3>Capture</h3>
+        <p>Mark any email as To‑do, In Progress or Done from the Gmail row it's already in.</p>
+      </div>
+      <div class="wf-step">
+        <div class="wf-num">02</div>
+        <h3>Extract</h3>
+        <p>Ask Maili's AI to pull action items and deadlines out of a messy thread.</p>
+      </div>
+      <div class="wf-step">
+        <div class="wf-num">03</div>
+        <h3>Review</h3>
+        <p>Open the board once a day as your real to‑do list.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section wrap reveal" id="ai">
+    <div class="spotlight">
+      <div>
+        <div class="label">AI extraction, up close</div>
+        <h2>Long threads go in. A short list of <em>real work</em> comes out.</h2>
+        <p style="margin-top:15px;color:var(--ink-soft);font-size:0.99rem;">Maili reads the thread the way you would, then hands you the things that actually need to happen — with dates, when it can find them.</p>
+        <ul class="spot-list">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Works on threads of any length</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Detects implied deadlines like "before Friday's call"</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> One click turns an item into a board card</li>
+        </ul>
+      </div>
+      <div class="thread-mock">
+        <div class="subj">Re: Q3 vendor contract — final review</div>
+        <div class="snippet">"...so if legal can confirm the indemnity clause, we can get this signed before Friday's board call. Also need the updated pricing sheet from Priya before we send it over."</div>
+        <div class="extract-box">
+          <div class="ex-label">Maili extracted</div>
+          <div class="ex-item">→ Confirm indemnity clause with legal <span class="due">due fri</span></div>
+          <div class="ex-item">→ Get pricing sheet from Priya <span class="due">before send</span></div>
+          <div class="ex-item">→ Send signed contract to vendor</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section wrap reveal">
+    <div class="public-box">
+      <div>
+        <h3>Built in public, by one developer</h3>
+        <p>Maili is built and supported by a single person, not a team — fixes ship fast and every piece of feedback gets read. If something breaks, the report form below comes straight to me.</p>
+      </div>
+      <div>
+        <div class="rm-head">Shipped vs. building next</div>
+        <div class="rm-item"><span class="rm-dot done"></span> Kanban board inside Gmail</div>
+        <div class="rm-item"><span class="rm-dot done"></span> AI action extraction from threads</div>
+        <div class="rm-item"><span class="rm-dot done"></span> Board notifications</div>
+        <div class="rm-item"><span class="rm-dot next"></span> AI reply drafts in your voice</div>
+        <div class="rm-item"><span class="rm-dot next"></span> Automatic follow‑up nudges</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section wrap reveal" id="support">
+    <div class="section-head">
+      <div class="label">Support</div>
+      <h2>Report an issue.</h2>
+      <p>Bugs, broken flows, confusing moments — send them straight to the team building Maili.</p>
+    </div>
+    <div class="support-wrap">
+      <aside class="support-note">
+        <div>
+          <h3>Every report gets read</h3>
+          <p>Share what happened, where it happened in Gmail, and any steps that help reproduce it.</p>
+        </div>
+        <div style="display:grid;gap:12px;">
+          <div class="support-chip"><span>Best for</span><strong>Bugs, crashes, UI issues</strong></div>
+          <div class="support-chip"><span>Status</span><strong>Actively maintained</strong></div>
+        </div>
+      </aside>
+      <form class="issue-form" id="issue-form">
+        <input type="hidden" name="access_key" value="806c6634-030e-4ae0-8aec-fef31cca37e5">
+        <input type="hidden" name="subject" value="New Maili extension issue report">
+        <input type="checkbox" name="botcheck" style="display:none" tabindex="-1" autocomplete="off">
+        <div class="form-grid">
+          <div class="field">
+            <label for="reporter-name">Name</label>
+            <input id="reporter-name" name="name" type="text" autocomplete="name" placeholder="Your name">
+          </div>
+          <div class="field">
+            <label for="reporter-email">Email</label>
+            <input id="reporter-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+          </div>
+          <div class="field">
+            <label for="issue-type">Issue type</label>
+            <select id="issue-type" name="type" required>
+              <option value="Bug">Bug</option>
+              <option value="Extension not loading">Extension not loading</option>
+              <option value="AI extraction issue">AI extraction issue</option>
+              <option value="Kanban issue">Kanban issue</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="issue-area">Where did it happen?</label>
+            <input id="issue-area" name="area" type="text" placeholder="Inbox, board, AI panel">
+          </div>
+          <div class="field field-full">
+            <label for="issue-details">What happened?</label>
+            <textarea id="issue-details" name="message" placeholder="Describe the issue, what you expected, and steps to reproduce it." required></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit" id="issue-submit">Send report</button>
+          <p class="form-status" id="issue-status" aria-live="polite"></p>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="wrap reveal" style="padding-bottom:90px;">
+    <div class="install-band">
+      <div>
+        <h2>Add Maili and open Gmail.</h2>
+        <p>Install from the Chrome Web Store — the board and AI extraction are ready the moment you open your inbox.</p>
+      </div>
+      <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/ldjhcbbeaploocbmldnbloainllgebel?utm_source=item-share-cb" target="_blank" rel="noopener noreferrer">Add to Chrome</a>
+    </div>
+  </section>
+</main>
+
+<footer class="footer wrap">
+  <a class="brand" href="#top" style="font-size:1rem;">
+    <img src="./assets/maili-new-rm.png" alt="Maili" style="width:60px;height:60px;">
+  </a>
+  <div class="footer-links">
+    <a href="#features">Features</a>
+    <a href="#support">Support</a>
+    <a href="./privacy.html">Privacy</a>
+    <a href="./terms.html">Terms</a>
+  </div>
+  <small>&copy; 2026 Maili. Built for faster Gmail work.</small>
+</footer>
+
+<script>
+  const nav = document.getElementById("nav");
+  const onScroll = () => nav.classList.toggle("scrolled", window.scrollY > 16);
+  onScroll();
+  window.addEventListener("scroll", onScroll, { passive: true });
+
+  const reveals = document.querySelectorAll(".reveal");
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  reveals.forEach(el => io.observe(el));
+
+  const issueForm = document.getElementById("issue-form");
+  const issueStatus = document.getElementById("issue-status");
+  const issueSubmit = document.getElementById("issue-submit");
+
+  issueForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    issueSubmit.disabled = true;
+    issueStatus.className = "form-status";
+    issueStatus.textContent = "Sending...";
+
+    const formData = new FormData(issueForm);
+    const payload = Object.fromEntries(formData.entries());
+
+    try {
+      const res = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const result = await res.json();
+      if (result.success) {
+        issueStatus.textContent = "Thanks — your report was sent.";
+        issueStatus.className = "form-status ok";
+        issueForm.reset();
+      } else {
+        issueStatus.textContent = "Something went wrong. Please try again.";
+        issueStatus.className = "form-status err";
+      }
+    } catch (err) {
+      issueStatus.textContent = "Network error — please try again.";
+      issueStatus.className = "form-status err";
+    } finally {
+      issueSubmit.disabled = false;
+    }
+  });
+</script>
 </body>
 </html>
