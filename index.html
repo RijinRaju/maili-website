@@ -220,6 +220,9 @@
   .footer{border-top:1px solid var(--line);padding:42px 0 38px;display:flex;flex-wrap:wrap;gap:20px;align-items:center;justify-content:space-between;color:var(--ink-faint);}
   .footer-links{display:flex;gap:20px;font-size:0.86rem;font-weight:500;color:var(--ink-soft);}
   .footer-links a:hover{color:var(--ink);}
+  .footer-badge{display:flex;align-items:center;line-height:0;}
+  .footer-badge a{display:inline-block;transition:opacity .2s;}
+  .footer-badge a:hover{opacity:.85;}
   .footer small{font-family:var(--font-mono);font-size:0.75rem;}
 
   .reveal{opacity:0;transform:translateY(16px);transition:opacity .55s ease, transform .55s ease;}
@@ -511,6 +514,11 @@
     <a href="#support">Support</a>
     <a href="./privacy.html">Privacy</a>
     <a href="./terms.html">Terms</a>
+  </div>
+  <div class="footer-badge">
+    <a href="https://www.codehype.ai/product/maili?utm_source=codehype_badge" target="_blank" rel="noopener noreferrer">
+      <img src="https://www.codehype.ai/badges/maili.svg?variant=find-us&v=20" alt="Featured on CodeHype" width="180" height="65" loading="lazy" decoding="async" style="display:inline-block;border:0;width:100%;max-width:180px;height:auto;max-height:65px;" />
+    </a>
   </div>
   <small>&copy; 2026 Maili. Built for faster Gmail work.</small>
 </footer>
